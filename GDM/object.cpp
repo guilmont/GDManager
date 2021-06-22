@@ -49,7 +49,7 @@ namespace GDM
 
     Data& Data::operator=(Data&& var) noexcept
     {
-        pout("DATA::MOVE OPERATOR >>", label);
+        pout("DATA :: MOVE OPERATOR >>", label);
 
         if (&var != this)
             new (this)Data(std::move(var));
@@ -73,18 +73,21 @@ namespace GDM
     bool Data::contains(const std::string &label) const
     {
         assert(type == Type::GROUP);
+        assert(label.size() < MAX_LABEL_SIZE);
         return objs.find(label) != objs.end();
     }
 
     Data &Data::operator[](const std::string &label)
     {
         assert(objs.find(label) != objs.end());
+        assert(label.size() < MAX_LABEL_SIZE);
         return objs.at(label);
     }
 
     const Data &Data::operator[](const std::string &label) const
     {
         assert(objs.find(label) != objs.end());
+        assert(label.size() < MAX_LABEL_SIZE);
         return objs.at(label);
     } 
 
@@ -94,14 +97,33 @@ namespace GDM
     Data &Data::addGroup(const std::string &label)
     {
         assert(type == Type::GROUP && objs.find(label) == objs.end());
+        assert(label.size() < MAX_LABEL_SIZE);
+
         objs.emplace(label, Data(label, Type::GROUP));
         return objs[label];
     }
+
+    void Data::addDescription(const std::string& label, const std::string& description)
+    {
+        assert(objDescription.find(label) == objDescription.end());
+        assert(label.size() < MAX_LABEL_SIZE);
+
+        objDescription[label] = description;
+    }
+    
+  
     void Data::remove(const std::string& label)
     {
         // checking that object is present
         assert(objs.find(label) != objs.end());
         objs.erase(label);
+    }
+
+    const std::string& Data::getDescription(const std::string& label) const
+    {
+        auto it = objDescription.find(label);
+        assert(it != objDescription.end());
+        return it->second;
     }
 
 
