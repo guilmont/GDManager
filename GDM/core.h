@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <cstring>
 #include <assert.h>
 
 #include <filesystem>
@@ -12,7 +13,7 @@ namespace fs = std::filesystem;
 
 #include <initializer_list>
 #include <memory>
-#include <map>
+#include <unordered_map>
 #include <typeinfo>
 
 #ifdef WIN32
@@ -33,7 +34,12 @@ namespace fs = std::filesystem;
 namespace GDM
 {
 
-    constexpr uint32_t MAX_LABEL_SIZE = 64;
+    // Some parameters to help saving to file
+    inline constexpr uint32_t MAX_LABEL_SIZE = 32;  // maximum number of characters allowed for a label
+
+    inline const char* GDM_SIGNATURE = "GDManager (ver 1) by GM Oliveira";
+
+    /////////////////////////
 
     static void pout() { std::cout << std::endl; }
 
@@ -44,7 +50,10 @@ namespace GDM
         pout(args...);
     }
 
+
     /////////////////////////
+
+    using Description = std::unordered_map<std::string, std::string>;
 
     struct Shape
     {
@@ -53,6 +62,7 @@ namespace GDM
 
     enum class Type : uint32_t
     {
+        NONE,
         GROUP,
         INT32,
         UINT8,
