@@ -82,6 +82,19 @@ namespace GDM
         return *this;
     }
 
+    void Data::release(void)
+    {
+        assert(numBytes > sizeof(getNumBytes(type))); // We can only release data if if contains more than 8 bytes
+        assert(buffer != nullptr);                    // why not to check that too?
+
+        if (buffer)
+        {
+            delete[] buffer;
+            buffer = nullptr;
+            // the offset in the inpnut file should still be set, hence we can re-import this data if necessary
+        }
+    }
+
     ///////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////
 
@@ -89,20 +102,20 @@ namespace GDM
 
     Group::~Group(void)
     {
-        for (auto [label, ptr] : objs)
+        for (auto [label, ptr] : m_children)
         {
             // pout("GROUP :: DELETE >> ", label);
             delete ptr;
         }
 
-        objs.clear();
+        m_children.clear();
     }
 
     Group::Group(const Group &var)
     {
         this->label = var.label;
         this->type = var.type;
-        this->objs = var.objs;
+        this->m_children = var.m_children;
 
         // pout("GROUP :: COPY CONSTRUCTOR >>", label);
     }
@@ -111,9 +124,9 @@ namespace GDM
     {
         this->label = std::move(var.label);
         this->type = var.type;
-        this->objs = std::move(var.objs);
+        this->m_children = std::move(var.m_children);
 
-        var.objs.clear();
+        var.m_children.clear();
 
         // pout("GROUP :: MOVE CONSTRUCTOR >>", label);
     }
@@ -146,24 +159,25 @@ namespace GDM
     bool Group::contains(const std::string &label) const
     {
         assert(label.size() < MAX_LABEL_SIZE);
-        return objs.find(label) != objs.end();
+        return m_children.find(label) != m_children.end();
     }
 
     Group &Group::addGroup(const std::string &label)
     {
         assert(label.size() < MAX_LABEL_SIZE);
-        assert(objs.find(label) == objs.end());
+        assert(m_children.find(label) == m_children.end());
 
         Group *ptr = new Group(label);
-        objs.emplace(label, std::move(ptr));
+        m_children.emplace(label, std::move(ptr));
         return *ptr;
     }
 
     void Group::remove(const std::string &label)
     {
         assert(label.size() < MAX_LABEL_SIZE);
-        assert(objs.find(label) != objs.end());
-        objs.erase(label);
+        assert(m_children.find(label) != m_children.end());
+        m_children.erase(label);
     }
 
+ 
 }

@@ -2,13 +2,50 @@
 
 namespace GDM
 {
-	GDM_API void File::load(void)
+	File::File(const std::string& path)
 	{
-		
+		if (!fs::exists(path))
+			return;
+
+		gdmFile.open(path, std::fstream::binary);
+		assert(gdmFile.good());
+
+		uint64_t offset = strlen(GDM_SIGNATURE);
+		char buffer[sizeof(Header)] = { 0x00 };
+		gdmFile.read(buffer, offset);
+
+		// Just ot make sure we are dealing with the proper type of file
+		assert(std::string(buffer).compare(GDM_SIGNATURE) == 0);
+
+		// Start by reading the root directory
+		gdmFile.seekg(offset);
+		gdmFile.read(buffer, sizeof(Header));
+		offset += sizeof(Header);
+
+		Header root = *reinterpret_cast<Header*>(buffer);
+		loadGroup(*this, root.shape.height, root.dataAddress, root.descriptionAddress);
+
+	}
+
+	File::File(Group&& group)
+	{
+		assert(m_children.size() == 0);
+		m_children = std::move(group.m_children);
+
+		group.m_children.clear();
 	}
 
 
-	void File::save(void)
+
+	File::~File(void)
+	{
+		if (gdmFile.is_open())
+			gdmFile.close();
+	}
+
+
+
+	void File::save(const std::string &path)
 	{
 		// Saving data about the root directory
 		Header head;
@@ -19,7 +56,7 @@ namespace GDM
 		head.type = Type::GROUP;
 		head.shape = { 1, getNumChildren() };
 		head.dataAddress = strlen(GDM_SIGNATURE) + sizeof(Header);
-		head.descriptionAddress = 0xffffffffffffffff;
+		head.descriptionAddress = NO_DESCRIPTION;
 
 		if (m_description.size() > 0)
 			genDescriptionBuffer(0, m_description);
@@ -40,15 +77,8 @@ namespace GDM
 		// Compressing data and inserting offset into header
 		for (auto& data : vData)
 		{
-			switch (data.cps)
-			{
-			case Compression::NONE:
-				break;
-			case Compression::ZIP:
-				break;
-			case Compression::LZW:
-				break;
-			}
+			// TODO: update when compression is implemented
+			assert(data.cps == Compression::NONE);
 
 			vHeader[data.headerID].dataAddress = headerOffset;
 			headerOffset += data.numBytes + sizeof(Compression) + sizeof(uint64_t); // uint64_t holds number of bytes
@@ -56,29 +86,44 @@ namespace GDM
 
 
 		// It is time to send everything into a file
-		std::ofstream arq(filepath, std::fstream::binary);
+		std::ofstream output(path, std::fstream::binary);
 
-		arq.write(GDM_SIGNATURE, strlen(GDM_SIGNATURE));
+		output.write(GDM_SIGNATURE, strlen(GDM_SIGNATURE));
 
 		for (const Header& head : vHeader)
-			arq.write(reinterpret_cast<const char*>(&head), sizeof(Header));
+			output.write(reinterpret_cast<const char*>(&head), sizeof(Header));
 
 		for (const HelperDescription& desc : vDesc)
 		{
 			uint32_t sz = static_cast<uint32_t>(desc.buffer.size());
-			arq.write(reinterpret_cast<const char*>(&sz), sizeof(uint32_t));
-			arq.write(desc.buffer.data(), desc.buffer.size()*sizeof(char));
+			output.write(reinterpret_cast<const char*>(&sz), sizeof(uint32_t));
+			output.write(desc.buffer.data(), desc.buffer.size()*sizeof(char));
 		}
 
 
 		for (const HelperData& data : vData)
 		{
-			arq.write(reinterpret_cast<const char*>(&data.cps), sizeof(Compression));
-			arq.write(reinterpret_cast<const char*>(&data.numBytes), sizeof(uint64_t));
-			arq.write(reinterpret_cast<const char*>(data.ptr), data.numBytes);
+			if (data.ptr) // Data is loaded into RAM
+			{
+				output.write(reinterpret_cast<const char*>(&data.cps), sizeof(Compression));
+				output.write(reinterpret_cast<const char*>(&data.numBytes), sizeof(uint64_t));
+				output.write(reinterpret_cast<const char*>(data.ptr), data.numBytes);
+			}
+			else
+			{
+				// TODO: Optimize this code
+				uint64_t size = data.numBytes + sizeof(uint64_t) + sizeof(Compression);
+				char *buf = new char[size];
+
+				gdmFile.seekg(data.inputFileOffset);
+				gdmFile.read(buf, size);
+				output.write(buf, size);
+
+				delete[] buf;
+			}
 		}
 
-		arq.close();
+		output.close();
 	}
 
 	void File::genDescriptionBuffer(uint64_t headerID, const Description& description)
@@ -107,7 +152,7 @@ namespace GDM
 
 		std::vector<const Object *> vGroup; // used to generate header for nested groups
 		
-		for (auto &[label, ptr] : obj.objs)
+		for (auto &[label, ptr] : obj.m_children)
 		{
 			Header var;
 			std::copy(label.begin(), label.end(), var.label);
@@ -119,7 +164,7 @@ namespace GDM
 				const Group &gp = *reinterpret_cast<Group *>(ptr);
 				var.shape = {1, gp.getNumChildren()};
 				var.dataAddress = strlen(GDM_SIGNATURE) + vHeader.size() * sizeof(Header); // later
-				var.descriptionAddress = 0xffffffffffffffff; // later
+				var.descriptionAddress = NO_DESCRIPTION; // later
 
 				if (gp.m_description.size() > 0)
 					genDescriptionBuffer(counter, gp.m_description);
@@ -144,17 +189,23 @@ namespace GDM
 				}
 				else
 				{
-					var.dataAddress = 0xffffffffffffffff; // will be set later
+					var.dataAddress = NO_DESCRIPTION; // will be set later, a generic value for now
 
+					// TODO: Update when compression is implemented
 					HelperData hdt;
+					hdt.cps = Compression::NONE;
 					hdt.numBytes = dt.numBytes;
-					hdt.ptr = dt.buffer;
 					hdt.headerID = counter;
+
+					if (dt.buffer)
+						hdt.ptr = dt.buffer;
+					else
+						hdt.inputFileOffset = dt.offset;
 
 					vData.emplace_back(std::move(hdt));
 
 				}
-					var.descriptionAddress = 0xffffffffffffffff; //  will be set later
+					var.descriptionAddress = NO_DESCRIPTION; //  if necessary, it will be set later
 
 					if (dt.m_description.size() > 0)
 						genDescriptionBuffer(counter, dt.m_description);
@@ -171,6 +222,94 @@ namespace GDM
 			const Group& group = *reinterpret_cast<const Group*>(ptr);
 			setHeader(group);
 		}
+	}
+
+	void File::loadDescription(Object& obj, uint64_t address)
+	{
+		// First we get the total number of bytes describing this object
+		uint32_t descSize;
+		gdmFile.seekg(address);
+		gdmFile.read(reinterpret_cast<char*>(&descSize), sizeof(uint32_t));
+
+		char* data = new char[descSize];
+
+		gdmFile.seekg(address + sizeof(uint32_t));
+		gdmFile.read(data, descSize);
+
+		// Now we load all labels and descriptions
+		uint64_t offset = 0;
+		while (offset < descSize)
+		{
+			std::string label(data + offset);
+			offset += label.size() + 1;
+			std::string desc(data + offset);
+			offset += desc.size() + 1;
+
+			obj.m_description.emplace(std::move(label), std::move(desc));
+		}
+
+		delete[] data;
+	}
+
+	void File::loadGroup(Group& obj, uint32_t numChildren, uint64_t dataAddress, uint64_t descAddress)
+	{
+		if (descAddress != NO_DESCRIPTION)
+			loadDescription(obj, descAddress);
+
+		std::vector<Header> vGroups;
+
+		uint64_t offset = dataAddress;
+		char buffer[sizeof(Header)] = { 0x00 };
+
+		for (uint32_t k = 0; k < numChildren; k++)
+		{
+			gdmFile.seekg(offset);
+			gdmFile.read(buffer, sizeof(Header));
+			offset += sizeof(Header);
+
+			Header *loc = reinterpret_cast<Header*>(buffer);
+
+			if (loc->type == Type::GROUP)
+			{
+				Group *gp = new Group(loc->label);
+				vGroups.push_back(*loc);
+				obj.m_children.emplace(loc->label, std::move(gp));
+			}
+			else
+			{
+				Data *dt = new Data(loc->label, loc->type);
+
+				dt->shape = loc->shape;
+				dt->numBytes = uint64_t(dt->shape.width) * uint64_t(dt->shape.height) * getNumBytes(dt->type);
+
+				if (loc->shape.width == 1 && loc->shape.height == 1)
+				{
+					dt->buffer = new uint8_t[dt->numBytes];
+					memcpy(dt->buffer, buffer + offsetof(Header, dataAddress), dt->numBytes);
+				}
+				else
+				{
+					dt->offset = loc->dataAddress;
+					dt->gdmFile = &gdmFile;
+				}
+
+
+				if (loc->descriptionAddress != NO_DESCRIPTION)
+					loadDescription(*dt, loc->descriptionAddress);
+
+
+				obj.m_children.emplace(loc->label, std::move(dt));
+			}
+		} // loop-children
+
+		// Loading the groups within this group
+		for (Header& head : vGroups)
+		{
+			Group &group = *reinterpret_cast<Group*>(obj.m_children[head.label]);
+			loadGroup(group, head.shape.height, head.dataAddress, head.descriptionAddress);
+		}
+
+
 	}
 
 }

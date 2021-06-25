@@ -5,28 +5,27 @@
 namespace GDM
 {
 
-	enum class Compression : uint32_t
-	{
-		NONE,
-		ZIP,
-		LZW
-	};
-
 	class File : public Group
 	{
 	public:
-		GDM_API File(const std::string& path) : filepath(path) {}
-		GDM_API ~File(void) = default;
+		GDM_API File(const std::string& path);
+		GDM_API File(Group&& group);
 
-		GDM_API void load(void);
-		GDM_API void save(void);
+		GDM_API File(void) = default;
+		GDM_API ~File(void);
+
+		GDM_API void save(const std::string& path);
 
 	private:
+		
+		// helper function to save data into file
 		void genDescriptionBuffer(uint64_t headerID, const Description& description);
 		void setHeader(const Group& obj);
 
-
-		std::string filepath;
+		// helper functions to load data from file
+		std::ifstream gdmFile;
+		void loadDescription(Object& obj, uint64_t address);
+		void loadGroup(Group& obj, uint32_t numChildren, uint64_t dataAddress, uint64_t descAddress);
 
 	private:
 		struct Header // The ordering is important for memory layout :: bigger tp smaller
@@ -41,16 +40,18 @@ namespace GDM
 
 		struct HelperData // not to be used directly into file
 		{
-			uint64_t headerID;
+			uint64_t headerID = 0;
 			
 			Compression cps = Compression::NONE;
-			uint64_t numBytes;
+			uint64_t numBytes = 0;
 			uint8_t* ptr = nullptr;
+
+			uint64_t inputFileOffset = 0;  // In case the the data was never loaded into RAM
 		};
 
 		struct HelperDescription // not to be used directly into file
 		{
-			uint64_t headerID;
+			uint64_t headerID = 0;
 			std::vector<char> buffer;
 		};
 

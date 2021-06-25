@@ -35,7 +35,8 @@ namespace GDM
 {
 
     // Some parameters to help saving to file
-    inline constexpr uint32_t MAX_LABEL_SIZE = 32;  // maximum number of characters allowed for a label
+    inline constexpr uint32_t MAX_LABEL_SIZE = 32;                    // maximum number of characters allowed for a label
+    inline constexpr uint64_t NO_DESCRIPTION = 0xffffffffffffffff;    // addresss used when no description is provided to object
 
     inline const char* GDM_SIGNATURE = "GDManager (ver 1) by GM Oliveira";
 
@@ -72,5 +73,13 @@ namespace GDM
         DOUBLE,
         STRING,
     };
+
+    enum class Compression : uint32_t
+    {
+        NONE,
+        ZIP,
+        LZW
+    };
+
 
 }

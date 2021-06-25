@@ -4,10 +4,13 @@
 
 namespace GDM
 {
+
     class File;
 
     class Object
     {
+        friend class File;
+
     public:
         GDM_API Object(const std::string &label, Type type) : label(label), type(type) {}
         GDM_API Object(void) = default;
@@ -21,7 +24,7 @@ namespace GDM
         GDM_API const std::string &getDescription(const std::string &label) const;
 
         // description interations
-        GDM_API std::unordered_map<std::string, std::string> &description(void) { return m_description; }
+        GDM_API std::unordered_map<std::string, std::string> &descriptions(void) { return m_description; }
 
     protected:
         std::string label = "";
@@ -53,23 +56,30 @@ namespace GDM
 
         // setting data
         template <typename TP>
-        void set(const TP *ptr, Shape sp);
+        void reset(const TP *ptr, Shape sp);
 
         template <typename TP>
-        void set(TP val);
+        void reset(TP val);
 
         // retrieving data
         template <typename TP>
-        TP get(void) const { return reinterpret_cast<TP *>(buffer)[0]; }
+        TP get(void) const;
 
         template <typename TP>
-        const TP *getArray(void) const { return reinterpret_cast<TP *>(buffer); }
+        const TP* getArray(void);
+
+        // Release memory in RAM in case data is to big
+        void release(void);
 
     protected:
-        // If class represents a data type have a data type
+        
         uint64_t numBytes = 1;
         Shape shape = {1, 1};
         uint8_t *buffer = nullptr;
+
+        uint64_t offset = 0;  // We are going to do lazy loading, so we have the offset to data in file gmdFile
+        std::ifstream* gdmFile = nullptr;
+
     };
 
     ///////////////////////////////////////////////////////
@@ -112,11 +122,12 @@ namespace GDM
         GDM_API void remove(const std::string &label);
 
         // iterations
-        GDM_API uint32_t getNumChildren(void) const { return uint32_t(objs.size()); }
-        GDM_API std::unordered_map<std::string, Object *> &children() { return objs; }
+        GDM_API uint32_t getNumChildren(void) const { return uint32_t(m_children.size()); }
+        GDM_API std::unordered_map<std::string, Object *> &children() { return m_children; }
+
 
     protected:
-        std::unordered_map<std::string, Object *> objs;
+        std::unordered_map<std::string, Object *> m_children;
     };
 
     ///////////////////////////////////////////////////////////////////////////
@@ -132,11 +143,34 @@ namespace GDM
     template <> Type GetType<float>(void)    { return Type::FLOAT;  }
     template <> Type GetType<double>(void)   { return Type::DOUBLE; }
 
+    static uint64_t getNumBytes(Type type)
+    {
+        switch (type)
+        {
+        case Type::INT32:
+            return sizeof(int32_t);
+        case Type::UINT8:
+            return sizeof(uint8_t);
+        case Type::UINT16:
+            return sizeof(uint16_t);
+        case Type::UINT32:
+            return sizeof(uint32_t);
+        case Type::FLOAT:
+            return sizeof(float);
+        case Type::DOUBLE:
+            return sizeof(double);
+        default:
+            assert(false);
+            return 0;
+            break;
+        }
+    }
+
     /////////////////////////
     /////////////////////////
 
     template <typename TP>
-    void Data::set(const TP *ptr, Shape sp)
+    void Data::reset(const TP *ptr, Shape sp)
     {
         uint64_t newSize = sp.width * sp.height * sizeof(TP);
         if (newSize != numBytes)
@@ -154,7 +188,47 @@ namespace GDM
     }
 
     template <typename TP>
-    void Data::set(TP value) { set(&value, {1, 1}); }
+    void Data::reset(TP value) { set(&value, {1, 1}); }
+
+    template<typename TP>
+    TP Data::get(void) const
+    {
+        assert(numBytes == sizeof(TP)); 
+        return reinterpret_cast<TP*>(buffer)[0];
+    }
+
+    template<typename TP>
+    const TP *Data::getArray(void)
+    {
+        uint64_t pos = offset;
+        assert(GetType<TP>() == type);
+        if (!buffer)
+        {
+            // Getting compression method
+            Compression comp;
+            gdmFile->seekg(pos);
+            gdmFile->read(reinterpret_cast<char*>(&comp), sizeof(Compression));
+            pos+= sizeof(Compression);
+
+            assert(comp == Compression::NONE); // TODO: Implement other types of compression
+
+            // Getting compressed number of bytes -> not important for now
+            uint64_t nBytes;
+            gdmFile->seekg(pos);
+            gdmFile->read(reinterpret_cast<char*>(&nBytes), sizeof(uint64_t));
+            pos+= sizeof(uint64_t);
+
+            assert(nBytes == this->numBytes);  // If not compression is used, theses values should be the same
+
+            // Importing data bytes
+            buffer = new uint8_t[numBytes];
+            gdmFile->seekg(pos);
+            gdmFile->read(reinterpret_cast<char*>(buffer), numBytes);
+        }
+
+        return reinterpret_cast<const TP*>(buffer);
+
+    }
 
     ///////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////
@@ -164,8 +238,8 @@ namespace GDM
     {
         assert(label.size() < MAX_LABEL_SIZE);
 
-        auto it = objs.find(label);
-        assert(it != objs.end()); // Does it exist?
+        auto it = m_children.find(label);
+        assert(it != m_children.end()); // Does it exist?
         return *reinterpret_cast<TP *>(it->second);
     }
 
@@ -174,8 +248,8 @@ namespace GDM
     {
         assert(label.size() < MAX_LABEL_SIZE);
 
-        auto it = objs.find(label);
-        assert(it != objs.end()); // Does it exist?
+        auto it = m_children.find(label);
+        assert(it != m_children.end()); // Does it exist?
 
         return *reinterpret_cast<TP *>(it->second);
     }
@@ -184,12 +258,12 @@ namespace GDM
     Data &Group::add(const std::string &label, const TP *value, Shape shape)
     {
         assert(label.size() < MAX_LABEL_SIZE);
-        assert(objs.find(label) == objs.end());
+        assert(m_children.find(label) == m_children.end());
 
         Data *var = new Data(label, GetType<TP>());
         var->set(value, shape);
 
-        objs.emplace(label, std::move(var));
+        m_children.emplace(label, std::move(var));
 
         return *var;
     }
@@ -198,12 +272,12 @@ namespace GDM
     Data &Group::add(const std::string &label, TP value)
     {
         assert(label.size() < MAX_LABEL_SIZE);
-        assert(objs.find(label) == objs.end());
+        assert(m_children.find(label) == m_children.end());
 
         Data *var = new Data(label, GetType<TP>());
         var->set(value);
 
-        objs.emplace(label, std::move(var));
+        m_children.emplace(label, std::move(var));
 
         return *var;
     }
