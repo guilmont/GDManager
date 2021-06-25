@@ -4,8 +4,9 @@
 
 namespace GDM
 {
-
     class File;
+    class Data;
+    class Group;
 
     class Object
     {
@@ -19,6 +20,7 @@ namespace GDM
         // utilities
         GDM_API const std::string &getLabel(void) const { return label; }
         GDM_API Type getType(void) const { return type; }
+        GDM_API void rename(const std::string &name);
 
         GDM_API void addDescription(const std::string &label, const std::string &description);
         GDM_API const std::string &getDescription(const std::string &label) const;
@@ -32,6 +34,9 @@ namespace GDM
 
         // We can always add some sort of description to the object
         Description m_description;
+
+        // We might want to now the parent object as well
+        Object *parent = nullptr;
     };
 
     ///////////////////////////////////////////////////////
@@ -40,9 +45,11 @@ namespace GDM
     class Data : public Object
     {
         friend class File;
+        friend class Object; // So other objects can change this Data
+        friend class Group;
 
     public:
-        GDM_API Data(const std::string& name, Type type);
+        GDM_API Data(const std::string &name, Type type);
         GDM_API ~Data(void) override;
 
         GDM_API Data(const Data &var);
@@ -66,20 +73,18 @@ namespace GDM
         TP get(void) const;
 
         template <typename TP>
-        const TP* getArray(void);
+        const TP *getArray(void);
 
         // Release memory in RAM in case data is to big
         void release(void);
 
-    protected:
-        
+    private:
         uint64_t numBytes = 1;
         Shape shape = {1, 1};
         uint8_t *buffer = nullptr;
 
-        uint64_t offset = 0;  // We are going to do lazy loading, so we have the offset to data in file gmdFile
-        std::ifstream* gdmFile = nullptr;
-
+        uint64_t offset = 0; // We are going to do lazy loading, so we have the offset to data in file gmdFile
+        std::ifstream *gdmFile = nullptr;
     };
 
     ///////////////////////////////////////////////////////
@@ -88,9 +93,11 @@ namespace GDM
     class Group : public Object
     {
         friend class File;
+        friend class Object; // so other objects can change this Group
+        friend class Data;
 
     public:
-        GDM_API Group(const std::string& name = "root");
+        GDM_API Group(const std::string &name = "root");
         GDM_API ~Group(void) override;
 
         GDM_API Group(const Group &var);
@@ -125,8 +132,7 @@ namespace GDM
         GDM_API uint32_t getNumChildren(void) const { return uint32_t(m_children.size()); }
         GDM_API std::unordered_map<std::string, Object *> &children() { return m_children; }
 
-
-    protected:
+    private:
         std::unordered_map<std::string, Object *> m_children;
     };
 
@@ -136,12 +142,18 @@ namespace GDM
 
     template <typename TP>
     static Type GetType(void);
-    template <> Type GetType<int32_t>(void)  { return Type::INT32;  }
-    template <> Type GetType<uint32_t>(void) { return Type::UINT32; }
-    template <> Type GetType<uint16_t>(void) { return Type::UINT16; }
-    template <> Type GetType<uint8_t>(void)  { return Type::UINT8;  }
-    template <> Type GetType<float>(void)    { return Type::FLOAT;  }
-    template <> Type GetType<double>(void)   { return Type::DOUBLE; }
+    template <>
+    Type GetType<int32_t>(void) { return Type::INT32; }
+    template <>
+    Type GetType<uint32_t>(void) { return Type::UINT32; }
+    template <>
+    Type GetType<uint16_t>(void) { return Type::UINT16; }
+    template <>
+    Type GetType<uint8_t>(void) { return Type::UINT8; }
+    template <>
+    Type GetType<float>(void) { return Type::FLOAT; }
+    template <>
+    Type GetType<double>(void) { return Type::DOUBLE; }
 
     static uint64_t getNumBytes(Type type)
     {
@@ -188,16 +200,16 @@ namespace GDM
     }
 
     template <typename TP>
-    void Data::reset(TP value) { set(&value, {1, 1}); }
+    void Data::reset(TP value) { reset(&value, {1, 1}); }
 
-    template<typename TP>
+    template <typename TP>
     TP Data::get(void) const
     {
-        assert(numBytes == sizeof(TP)); 
-        return reinterpret_cast<TP*>(buffer)[0];
+        assert(numBytes == sizeof(TP));
+        return reinterpret_cast<TP *>(buffer)[0];
     }
 
-    template<typename TP>
+    template <typename TP>
     const TP *Data::getArray(void)
     {
         uint64_t pos = offset;
@@ -207,27 +219,26 @@ namespace GDM
             // Getting compression method
             Compression comp;
             gdmFile->seekg(pos);
-            gdmFile->read(reinterpret_cast<char*>(&comp), sizeof(Compression));
-            pos+= sizeof(Compression);
+            gdmFile->read(reinterpret_cast<char *>(&comp), sizeof(Compression));
+            pos += sizeof(Compression);
 
             assert(comp == Compression::NONE); // TODO: Implement other types of compression
 
             // Getting compressed number of bytes -> not important for now
             uint64_t nBytes;
             gdmFile->seekg(pos);
-            gdmFile->read(reinterpret_cast<char*>(&nBytes), sizeof(uint64_t));
-            pos+= sizeof(uint64_t);
+            gdmFile->read(reinterpret_cast<char *>(&nBytes), sizeof(uint64_t));
+            pos += sizeof(uint64_t);
 
-            assert(nBytes == this->numBytes);  // If not compression is used, theses values should be the same
+            assert(nBytes == this->numBytes); // If not compression is used, theses values should be the same
 
             // Importing data bytes
             buffer = new uint8_t[numBytes];
             gdmFile->seekg(pos);
-            gdmFile->read(reinterpret_cast<char*>(buffer), numBytes);
+            gdmFile->read(reinterpret_cast<char *>(buffer), numBytes);
         }
 
-        return reinterpret_cast<const TP*>(buffer);
-
+        return reinterpret_cast<const TP *>(buffer);
     }
 
     ///////////////////////////////////////////////////////
@@ -261,7 +272,8 @@ namespace GDM
         assert(m_children.find(label) == m_children.end());
 
         Data *var = new Data(label, GetType<TP>());
-        var->set(value, shape);
+        var->parent = this;
+        var->reset(value, shape);
 
         m_children.emplace(label, std::move(var));
 
@@ -275,7 +287,8 @@ namespace GDM
         assert(m_children.find(label) == m_children.end());
 
         Data *var = new Data(label, GetType<TP>());
-        var->set(value);
+        var->parent = this;
+        var->reset(value);
 
         m_children.emplace(label, std::move(var));
 

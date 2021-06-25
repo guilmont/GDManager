@@ -2,6 +2,18 @@
 
 namespace GDM
 {
+    GDM_API void Object::rename(const std::string& name)
+    {
+        if (parent)
+        {
+            Group* group = reinterpret_cast<Group*>(parent);
+            group->m_children[name] = this;
+            group->m_children[label] = nullptr; // we don't want to destroy "this"
+            group->remove(this->label);
+        }
+
+        this->label = name;
+    }
 
     void Object::addDescription(const std::string &label, const std::string &description)
     {
@@ -81,6 +93,8 @@ namespace GDM
 
         return *this;
     }
+
+
 
     void Data::release(void)
     {
@@ -162,12 +176,15 @@ namespace GDM
         return m_children.find(label) != m_children.end();
     }
 
+
     Group &Group::addGroup(const std::string &label)
     {
         assert(label.size() < MAX_LABEL_SIZE);
         assert(m_children.find(label) == m_children.end());
 
         Group *ptr = new Group(label);
+        ptr->parent = this;
+
         m_children.emplace(label, std::move(ptr));
         return *ptr;
     }
@@ -175,8 +192,11 @@ namespace GDM
     void Group::remove(const std::string &label)
     {
         assert(label.size() < MAX_LABEL_SIZE);
-        assert(m_children.find(label) != m_children.end());
-        m_children.erase(label);
+
+        auto it = m_children.find(label);
+
+        assert( it != m_children.end());
+        m_children.erase(it);
     }
 
  

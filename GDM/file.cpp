@@ -272,13 +272,14 @@ namespace GDM
 			if (loc->type == Type::GROUP)
 			{
 				Group *gp = new Group(loc->label);
+				gp->parent = &obj;
 				vGroups.push_back(*loc);
 				obj.m_children.emplace(loc->label, std::move(gp));
 			}
 			else
 			{
 				Data *dt = new Data(loc->label, loc->type);
-
+				dt->parent = &obj;
 				dt->shape = loc->shape;
 				dt->numBytes = uint64_t(dt->shape.width) * uint64_t(dt->shape.height) * getNumBytes(dt->type);
 
