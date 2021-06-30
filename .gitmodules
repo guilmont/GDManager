@@ -1,0 +1,3 @@
+[submodule "Editor/vendor/GRender"]
+	path = Editor/vendor/GRender
+	url = https://github.com/guilmont/GRender.git
