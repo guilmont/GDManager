@@ -8,13 +8,15 @@ namespace GDM
 	class File : public Group
 	{
 	public:
-		GDM_API File(const std::string& path);
+		GDM_API File(const fs::path& path);
 		GDM_API File(Group&& group);
 
 		GDM_API File(void) = default;
 		GDM_API ~File(void);
 
-		GDM_API void save(const std::string& path);
+		GDM_API const fs::path& getFilePath(void) const { return filePath; }
+
+		GDM_API void save(const fs::path& path);
 
 	private:
 		
@@ -25,7 +27,9 @@ namespace GDM
 		// helper functions to load data from file
 		std::ifstream gdmFile;
 		void loadDescription(Object& obj, uint64_t address);
-		void loadGroup(Group& obj, uint32_t numChildren, uint64_t dataAddress, uint64_t descAddress);
+		void loadGroup(Group* obj, uint32_t numChildren, uint64_t dataAddress, uint64_t descAddress);
+
+		const fs::path filePath; // used to check if saving address is different
 
 	private:
 		struct Header // The ordering is important for memory layout :: bigger tp smaller
@@ -55,6 +59,8 @@ namespace GDM
 			std::vector<char> buffer;
 		};
 
+
+		uint64_t offset;
 		std::vector<Header> vHeader;
 		std::vector<HelperData> vData;
 		std::vector<HelperDescription> vDesc;

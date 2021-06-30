@@ -2,15 +2,17 @@
 
 namespace GDM
 {
-	File::File(const std::string& path)
+	File::File(const fs::path& path) : filePath(path)
 	{
 		if (!fs::exists(path))
 			return;
 
+		pout("\nCurrent file:", path.string());
+
 		gdmFile.open(path, std::fstream::binary);
 		assert(gdmFile.good());
 
-		uint64_t offset = strlen(GDM_SIGNATURE);
+		offset = strlen(GDM_SIGNATURE);
 		char buffer[sizeof(Header)] = { 0x00 };
 		gdmFile.read(buffer, offset);
 
@@ -23,7 +25,7 @@ namespace GDM
 		offset += sizeof(Header);
 
 		Header root = *reinterpret_cast<Header*>(buffer);
-		loadGroup(*this, root.shape.height, root.dataAddress, root.descriptionAddress);
+		loadGroup(this, root.shape.height, root.dataAddress, root.descriptionAddress);
 
 	}
 
@@ -45,8 +47,15 @@ namespace GDM
 
 
 
-	void File::save(const std::string &path)
+	void File::save(const fs::path& path)
 	{
+		assert(filePath.compare(path) != 0);
+
+		// Clearing data, so we can save fresh
+		vHeader.clear();
+		vData.clear();
+		vDesc.clear();
+
 		// Saving data about the root directory
 		Header head;
 
@@ -86,7 +95,8 @@ namespace GDM
 
 
 		// It is time to send everything into a file
-		std::ofstream output(path, std::fstream::binary);
+		pout("Saving data in", path.string());
+		std::ofstream output(path, std::ofstream::binary | std::ofstream::trunc);
 
 		output.write(GDM_SIGNATURE, strlen(GDM_SIGNATURE));
 
@@ -144,14 +154,7 @@ namespace GDM
 
 	void File::setHeader(const Group &obj)
 	{
-		uint64_t 
-			counter = vHeader.size(),
-			groupSize = obj.getNumChildren();
 
-		vHeader.resize(counter + groupSize);
-
-		std::vector<const Object *> vGroup; // used to generate header for nested groups
-		
 		for (auto &[label, ptr] : obj.m_children)
 		{
 			Header var;
@@ -162,16 +165,21 @@ namespace GDM
 			if (ptr->getType() == Type::GROUP)
 			{
 				const Group &gp = *reinterpret_cast<Group *>(ptr);
+
 				var.shape = {1, gp.getNumChildren()};
-				var.dataAddress = strlen(GDM_SIGNATURE) + vHeader.size() * sizeof(Header); // later
+				var.dataAddress = strlen(GDM_SIGNATURE) +  (vHeader.size() + 1) * sizeof(Header);
 				var.descriptionAddress = NO_DESCRIPTION; // later
 
 				if (gp.m_description.size() > 0)
-					genDescriptionBuffer(counter, gp.m_description);
+					genDescriptionBuffer(vHeader.size(), gp.m_description);
+
+				// Appending header to output variable
+				vHeader.emplace_back(std::move(var));
 
 
-				// So we can run separately later
-				vGroup.push_back(ptr);
+				// creating header for this group
+				setHeader(gp);
+
 			}
 
 			else
@@ -181,7 +189,7 @@ namespace GDM
 				var.shape = dt.shape;
 
 				// if data consumes less than 8 bytes, I'm going to save it here for efficiency
-				if (dt.numBytes < 8)
+				if (dt.numBytes < sizeof(uint64_t))
 				{
 					var.dataAddress = 0;
 					uint8_t *v = reinterpret_cast<uint8_t *>(&var.dataAddress);
@@ -195,7 +203,7 @@ namespace GDM
 					HelperData hdt;
 					hdt.cps = Compression::NONE;
 					hdt.numBytes = dt.numBytes;
-					hdt.headerID = counter;
+					hdt.headerID = vHeader.size();
 
 					if (dt.buffer)
 						hdt.ptr = dt.buffer;
@@ -208,20 +216,16 @@ namespace GDM
 					var.descriptionAddress = NO_DESCRIPTION; //  if necessary, it will be set later
 
 					if (dt.m_description.size() > 0)
-						genDescriptionBuffer(counter, dt.m_description);
+						genDescriptionBuffer(vHeader.size(), dt.m_description);
+
+					// Appending header to output variable
+					vHeader.emplace_back(std::move(var));
 			}
 
-			// Appending header to output variable
-			vHeader[counter] = std::move(var);
-			counter++;
+		
 		}
 
-		// Submitting groups within this group
-		for (const Object* ptr : vGroup)
-		{
-			const Group& group = *reinterpret_cast<const Group*>(ptr);
-			setHeader(group);
-		}
+		
 	}
 
 	void File::loadDescription(Object& obj, uint64_t address)
@@ -251,14 +255,12 @@ namespace GDM
 		delete[] data;
 	}
 
-	void File::loadGroup(Group& obj, uint32_t numChildren, uint64_t dataAddress, uint64_t descAddress)
+	void File::loadGroup(Group* obj, uint32_t numChildren, uint64_t dataAddress, uint64_t descAddress)
 	{
 		if (descAddress != NO_DESCRIPTION)
-			loadDescription(obj, descAddress);
+			loadDescription(*obj, descAddress);
 
-		std::vector<Header> vGroups;
-
-		uint64_t offset = dataAddress;
+		offset = dataAddress; 
 		char buffer[sizeof(Header)] = { 0x00 };
 
 		for (uint32_t k = 0; k < numChildren; k++)
@@ -267,48 +269,42 @@ namespace GDM
 			gdmFile.read(buffer, sizeof(Header));
 			offset += sizeof(Header);
 
-			Header *loc = reinterpret_cast<Header*>(buffer);
+			Header &loc = *reinterpret_cast<Header*>(buffer);
 
-			if (loc->type == Type::GROUP)
+			if (loc.type == Type::GROUP)
 			{
-				Group *gp = new Group(loc->label);
-				gp->parent = &obj;
-				vGroups.push_back(*loc);
-				obj.m_children.emplace(loc->label, std::move(gp));
+				Group *gp = new Group(loc.label);
+				gp->parent = obj;
+				loadGroup(gp, loc.shape.height, loc.dataAddress, loc.descriptionAddress);
+
+				obj->m_children.emplace(loc.label, std::move(gp));
 			}
 			else
 			{
-				Data *dt = new Data(loc->label, loc->type);
-				dt->parent = &obj;
-				dt->shape = loc->shape;
+				Data *dt = new Data(loc.label, loc.type);
+				dt->parent = obj;
+				dt->shape = loc.shape;
 				dt->numBytes = uint64_t(dt->shape.width) * uint64_t(dt->shape.height) * getNumBytes(dt->type);
 
-				if (loc->shape.width == 1 && loc->shape.height == 1)
+				if (loc.shape.width == 1 && loc.shape.height == 1)
 				{
 					dt->buffer = new uint8_t[dt->numBytes];
 					memcpy(dt->buffer, buffer + offsetof(Header, dataAddress), dt->numBytes);
 				}
 				else
 				{
-					dt->offset = loc->dataAddress;
+					dt->offset = loc.dataAddress;
 					dt->gdmFile = &gdmFile;
 				}
 
 
-				if (loc->descriptionAddress != NO_DESCRIPTION)
-					loadDescription(*dt, loc->descriptionAddress);
+				if (loc.descriptionAddress != NO_DESCRIPTION)
+					loadDescription(*dt, loc.descriptionAddress);
 
 
-				obj.m_children.emplace(loc->label, std::move(dt));
+				obj->m_children.emplace(loc.label, std::move(dt));
 			}
 		} // loop-children
-
-		// Loading the groups within this group
-		for (Header& head : vGroups)
-		{
-			Group &group = *reinterpret_cast<Group*>(obj.m_children[head.label]);
-			loadGroup(group, head.shape.height, head.dataAddress, head.descriptionAddress);
-		}
 
 
 	}

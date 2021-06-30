@@ -38,16 +38,14 @@ static void printGroup(std::string step, GDM::Group &obj)
 			case GDM::Type::DOUBLE:
 				printf("DATA (DOUBLE {%d,%d}) >> ", shape.width, shape.height);
 				break;
-			case GDM::Type::STRING:
-				printf("DATA (STRING {%d,%d}) >> ", shape.width, shape.height);
-				break;
 			default:
-				printf("UNKNOWN >> ");
+				printf("UNKNOWN >> UNKNOWN\n");
+				continue;
 				break;
 			}
 		}
 
-		int32_t nDesc = ptr->descriptions().size();
+		int64_t nDesc = ptr->descriptions().size();
 
 		if (nDesc == 0)
 			printf("No description\n");

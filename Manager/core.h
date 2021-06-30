@@ -14,6 +14,7 @@ namespace fs = std::filesystem;
 #include <initializer_list>
 #include <memory>
 #include <unordered_map>
+#include <map>
 #include <typeinfo>
 
 #ifdef WIN32
@@ -54,7 +55,7 @@ namespace GDM
 
     /////////////////////////
 
-    using Description = std::unordered_map<std::string, std::string>;
+    using Description = std::map<std::string, std::string>;
 
     struct Shape
     {
@@ -71,7 +72,6 @@ namespace GDM
         UINT32,
         FLOAT,
         DOUBLE,
-        STRING,
     };
 
     enum class Compression : uint32_t

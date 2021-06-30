@@ -6,10 +6,9 @@ namespace GDM
     {
         if (parent)
         {
-            Group* group = reinterpret_cast<Group*>(parent);
-            group->m_children[name] = this;
-            group->m_children[label] = nullptr; // we don't want to destroy "this"
-            group->remove(this->label);
+            parent->m_children[name] = this;
+            parent->m_children[label] = nullptr; // we don't want to destroy "this"
+            parent->remove(this->label);
         }
 
         this->label = name;
@@ -95,6 +94,37 @@ namespace GDM
     }
 
 
+
+    uint8_t* Data::getRawBuffer(void)
+    {
+        if (!buffer)
+        {
+            uint64_t pos = offset;
+
+            // Getting compression method
+            Compression comp;
+            gdmFile->seekg(pos);
+            gdmFile->read(reinterpret_cast<char*>(&comp), sizeof(Compression));
+            pos += sizeof(Compression);
+
+            assert(comp == Compression::NONE); // TODO: Implement other types of compression
+
+            // Getting compressed number of bytes -> not important for now
+            uint64_t nBytes;
+            gdmFile->seekg(pos);
+            gdmFile->read(reinterpret_cast<char*>(&nBytes), sizeof(uint64_t));
+            pos += sizeof(uint64_t);
+
+            assert(nBytes == this->numBytes); // If not compression is used, theses values should be the same
+
+            // Importing data bytes
+            buffer = new uint8_t[numBytes];
+            gdmFile->seekg(pos);
+            gdmFile->read(reinterpret_cast<char*>(buffer), numBytes);
+        }
+
+        return buffer;
+    }
 
     void Data::release(void)
     {

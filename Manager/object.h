@@ -26,7 +26,11 @@ namespace GDM
         GDM_API const std::string &getDescription(const std::string &label) const;
 
         // description interations
-        GDM_API std::unordered_map<std::string, std::string> &descriptions(void) { return m_description; }
+        GDM_API Description &descriptions(void) { return m_description; }
+
+
+        // We might want to now the parent object as well
+        Group* parent = nullptr;
 
     protected:
         std::string label = "";
@@ -35,8 +39,6 @@ namespace GDM
         // We can always add some sort of description to the object
         Description m_description;
 
-        // We might want to now the parent object as well
-        Object *parent = nullptr;
     };
 
     ///////////////////////////////////////////////////////
@@ -74,6 +76,8 @@ namespace GDM
 
         template <typename TP>
         const TP *getArray(void);
+
+        GDM_API uint8_t* getRawBuffer(void);
 
         // Release memory in RAM in case data is to big
         void release(void);
@@ -184,19 +188,22 @@ namespace GDM
     template <typename TP>
     void Data::reset(const TP *ptr, Shape sp)
     {
-        uint64_t newSize = sp.width * sp.height * sizeof(TP);
+        uint64_t newSize = uint64_t(sp.width) * uint64_t(sp.height) * sizeof(TP);
         if (newSize != numBytes)
         {
             delete[] buffer;
             numBytes = newSize;
-            buffer = new uint8_t[numBytes];
+            buffer = new uint8_t[numBytes]();
         }
 
         type = GetType<TP>();
         shape = sp;
 
-        const uint8_t *var = reinterpret_cast<const uint8_t *>(ptr);
-        std::copy(var, var + numBytes, buffer);
+        if (ptr != nullptr)
+        {
+            const uint8_t* var = reinterpret_cast<const uint8_t*>(ptr);
+            std::copy(var, var + numBytes, buffer);
+        }
     }
 
     template <typename TP>
@@ -212,33 +219,8 @@ namespace GDM
     template <typename TP>
     const TP *Data::getArray(void)
     {
-        uint64_t pos = offset;
         assert(GetType<TP>() == type);
-        if (!buffer)
-        {
-            // Getting compression method
-            Compression comp;
-            gdmFile->seekg(pos);
-            gdmFile->read(reinterpret_cast<char *>(&comp), sizeof(Compression));
-            pos += sizeof(Compression);
-
-            assert(comp == Compression::NONE); // TODO: Implement other types of compression
-
-            // Getting compressed number of bytes -> not important for now
-            uint64_t nBytes;
-            gdmFile->seekg(pos);
-            gdmFile->read(reinterpret_cast<char *>(&nBytes), sizeof(uint64_t));
-            pos += sizeof(uint64_t);
-
-            assert(nBytes == this->numBytes); // If not compression is used, theses values should be the same
-
-            // Importing data bytes
-            buffer = new uint8_t[numBytes];
-            gdmFile->seekg(pos);
-            gdmFile->read(reinterpret_cast<char *>(buffer), numBytes);
-        }
-
-        return reinterpret_cast<const TP *>(buffer);
+        return reinterpret_cast<const TP *>(getRawBuffer());
     }
 
     ///////////////////////////////////////////////////////
@@ -295,4 +277,5 @@ namespace GDM
         return *var;
     }
 
+ 
 } // namespace
