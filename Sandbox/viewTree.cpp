@@ -21,22 +21,22 @@ static void printGroup(std::string step, GDM::Group &obj)
 			switch (data->getType())
 			{
 			case GDM::Type::INT32:
-				printf("DATA (INT32 {%d,%d}) >> ", shape.width, shape.height);
+				printf("DATA (INT32 {%d,%d}) >> ", shape.height, shape.width);
 				break;
 			case GDM::Type::UINT8:
-				printf("DATA (UINT8 {%d,%d}) >> ", shape.width, shape.height);
+				printf("DATA (UINT8 {%d,%d}) >> ", shape.height, shape.width);
 				break;
 			case GDM::Type::UINT16:
-				printf("DATA (UINT16 {%d,%d}) >> ", shape.width, shape.height);
+				printf("DATA (UINT16 {%d,%d}) >> ", shape.height, shape.width);
 				break;
 			case GDM::Type::UINT32:
-				printf("DATA (UINT32 {%d,%d}) >> ", shape.width, shape.height);
+				printf("DATA (UINT32 {%d,%d}) >> ", shape.height, shape.width);
 				break;
 			case GDM::Type::FLOAT:
-				printf("DATA (FLOAT {%d,%d}) >> ", shape.width, shape.height);
+				printf("DATA (FLOAT {%d,%d}) >> ", shape.height, shape.width);
 				break;
 			case GDM::Type::DOUBLE:
-				printf("DATA (DOUBLE {%d,%d}) >> ", shape.width, shape.height);
+				printf("DATA (DOUBLE {%d,%d}) >> ", shape.height, shape.width);
 				break;
 			default:
 				printf("UNKNOWN >> UNKNOWN\n");

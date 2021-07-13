@@ -219,6 +219,27 @@ namespace GDM
         return *ptr;
     }
 
+    GDM_API void Group::addGroup(Group* group)
+    {
+        const std::string& label = group->getLabel();
+        assert(m_children.find(label) == m_children.end());
+
+        group->parent = this;
+
+        m_children.emplace(label, std::move(group));
+    }
+
+ 
+    GDM_API void Group::addData(Data *data)
+    {
+        const std::string& label = data->getLabel();
+        assert(m_children.find(label) == m_children.end());
+
+        data->parent = this;
+
+        m_children.emplace(label, std::move(data));
+    }
+
     void Group::remove(const std::string &label)
     {
         assert(label.size() < MAX_LABEL_SIZE);

@@ -122,10 +122,10 @@ void GDEditor::onUserUpdate(float deltaTime)
 	}
 
 	if (ctrl & O)
-		dialog.createDialog(GDialog::OPEN, "Open file...", { "gdm" }, this, [](const std::string& path, void* ptr) -> void { reinterpret_cast<GDEditor*>(ptr)->open(path); });
+		dialog.createDialog(GDialog::OPEN, "Open file...", { "gdm", "gd" }, this, [](const std::string& path, void* ptr) -> void { reinterpret_cast<GDEditor*>(ptr)->open(path); });
 
 	if (ctrl & S)
-		dialog.createDialog(GDialog::SAVE, "Save file...", { "gdm" }, this, [](const std::string& path, void* ptr) -> void { reinterpret_cast<GDEditor*>(ptr)->save(path); });
+		dialog.createDialog(GDialog::SAVE, "Save file...", { "gdm", "gd" }, this, [](const std::string& path, void* ptr) -> void { reinterpret_cast<GDEditor*>(ptr)->save(path); });
 
 
 }
@@ -160,10 +160,10 @@ void GDEditor::ImGuiMenuLayer(void)
 		}
 
 		if (ImGui::MenuItem("Open...", "Ctrl+O"))
-			dialog.createDialog(GDialog::OPEN, "Open file...", { "gdm" }, this, [](const std::string& path, void* ptr) -> void { reinterpret_cast<GDEditor*>(ptr)->open(path); });
+			dialog.createDialog(GDialog::OPEN, "Open file...", { "gdm", "gd" }, this, [](const std::string& path, void* ptr) -> void { reinterpret_cast<GDEditor*>(ptr)->open(path); });
 
 		if (ImGui::MenuItem("Save...", "Ctrl+S"))
-			dialog.createDialog(GDialog::SAVE, "Save file...", { "gdm" }, this, [](const std::string& path, void* ptr) -> void { reinterpret_cast<GDEditor*>(ptr)->save(path); });
+			dialog.createDialog(GDialog::SAVE, "Save file...", { "gdm", "gd" }, this, [](const std::string& path, void* ptr) -> void { reinterpret_cast<GDEditor*>(ptr)->save(path); });
 
 		if (ImGui::MenuItem("Exit"))
 			closeApp();
@@ -326,7 +326,7 @@ void GDEditor::detailWindow(void)
 	{
 		GDM::Data* dt = reinterpret_cast<GDM::Data*>(current);
 		GDM::Shape shape = dt->getShape();
-		text("Shape:", "{ " + std::to_string(shape.width) + ", " + std::to_string(shape.height) + " }");
+		text("Shape:", "{ " + std::to_string(shape.height) + ", " + std::to_string(shape.width) + " }");
 
 	}
 
@@ -585,7 +585,7 @@ void GDEditor::addObject(GDM::Group* group)
 		// Determinining
 		fonts.text("Shape:", "bold");
 		ImGui::SameLine();
-		ImGui::DragInt2("##shape", dim, 0.1f, 1.0f);
+		ImGui::DragInt2("##shape", dim, 0.1f, 1);
 
 	}
 

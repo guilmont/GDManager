@@ -1,11 +1,18 @@
 cmake_minimum_required(VERSION 3.10.0)
 
-project(Sandbox)
+if (GDM_TEST)
+    project(Sandbox)
+    add_executable(Sandbox sandbox.cpp)
+    target_link_libraries(Sandbox PRIVATE GDManager)
 
-add_executable(Sandbox sandbox.cpp)
-target_link_libraries(Sandbox PRIVATE GDManager)
+    install(TARGETS Sandbox DESTINATION .)
+endif()
 
 
-# A quick API to see the hierarchical structural of GDM files from the command line
-add_executable(ViewTree viewTree.cpp)
-target_link_libraries(ViewTree PRIVATE GDManager)
+if (GDM_CMD_VIEWER)
+    project(Viewer)
+    add_executable(ViewTree viewTree.cpp)
+    target_link_libraries(ViewTree PRIVATE GDManager)
+
+    install(TARGETS ViewTree DESTINATION .)
+endif()

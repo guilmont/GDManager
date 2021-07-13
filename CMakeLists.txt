@@ -11,17 +11,13 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
-option(BUILD_TESTS "Builds tests on GDManager API" ON)
-option(BUILD_EDITOR "Builds graphical interface to interact with GDM files" ON)
-
+option(GDM_PYTHON_BINDING "Build python buildings got GDManager" ON)
+option(GDM_EDITOR "Build graphical interface to interact with GDM files" ON)
+option(GDM_CMD_VIEWER "Build command line tool to GDM file structure" ON)
+option(GDM_TEST "Builds file template for testing" OFF)
+option(GDM_PRECOMPILE_HEADERS "Precompiles GDM headers" OFF)
 
 # Building things accordingly
 add_subdirectory(Manager)
-
-if (BUILD_TESTS)
-    add_subdirectory(Sandbox)
-endif()
-
-if (BUILD_EDITOR)
-    add_subdirectory(Editor)
-endif()
+add_subdirectory(Sandbox)
+add_subdirectory(Editor)

@@ -34,7 +34,11 @@ namespace GDM
 		assert(m_children.size() == 0);
 		m_children = std::move(group.m_children);
 
+		assert(m_description.size() == 0);
+		m_description = std::move(group.m_description);
+
 		group.m_children.clear();
+		group.m_description.clear();
 	}
 
 
@@ -63,7 +67,7 @@ namespace GDM
 		std::copy(label.begin(), label.end(), head.label);
 
 		head.type = Type::GROUP;
-		head.shape = { 1, getNumChildren() };
+		head.shape = { getNumChildren(), 1 };
 		head.dataAddress = strlen(GDM_SIGNATURE) + sizeof(Header);
 		head.descriptionAddress = NO_DESCRIPTION;
 
@@ -166,7 +170,7 @@ namespace GDM
 			{
 				const Group &gp = *reinterpret_cast<Group *>(ptr);
 
-				var.shape = {1, gp.getNumChildren()};
+				var.shape = {gp.getNumChildren(), 1};
 				var.dataAddress = strlen(GDM_SIGNATURE) +  (vHeader.size() + 1) * sizeof(Header);
 				var.descriptionAddress = NO_DESCRIPTION; // later
 

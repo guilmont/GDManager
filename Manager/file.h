@@ -60,7 +60,7 @@ namespace GDM
 		};
 
 
-		uint64_t offset;
+		uint64_t offset = 0;
 		std::vector<Header> vHeader;
 		std::vector<HelperData> vData;
 		std::vector<HelperDescription> vDesc;

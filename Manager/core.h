@@ -59,7 +59,7 @@ namespace GDM
 
     struct Shape
     {
-        uint32_t width, height;
+        uint32_t height, width;
     };
 
     enum class Type : uint32_t

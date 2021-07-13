@@ -80,7 +80,7 @@ namespace GDM
         GDM_API uint8_t* getRawBuffer(void);
 
         // Release memory in RAM in case data is to big
-        void release(void);
+        GDM_API void release(void);
 
     private:
         uint64_t numBytes = 1;
@@ -114,15 +114,19 @@ namespace GDM
         GDM_API bool contains(const std::string &name) const;
 
         template <typename TP>
-        TP &get(const std::string &label);
+        TP &get(const std::string &label); // returns child object
 
         template <typename TP>
-        const TP &get(const std::string &label) const;
+        const TP &get(const std::string &label) const; // return child object
 
         // Add new groups to current group
-        GDM_API Group &addGroup(const std::string &label);
-
+        GDM_API Group& addGroup(const std::string& label);
+        GDM_API void addGroup(Group *group);
+        
         // Adding data to group
+        GDM_API void addData(Data *data);
+
+
         template <typename TP>
         Data &add(const std::string &label, const TP *value, Shape shape);
 
@@ -145,36 +149,26 @@ namespace GDM
     // TEMPLATE DEFINITIONS
 
     template <typename TP>
-    static Type GetType(void);
-    template <>
-    Type GetType<int32_t>(void) { return Type::INT32; }
-    template <>
-    Type GetType<uint32_t>(void) { return Type::UINT32; }
-    template <>
-    Type GetType<uint16_t>(void) { return Type::UINT16; }
-    template <>
-    Type GetType<uint8_t>(void) { return Type::UINT8; }
-    template <>
-    Type GetType<float>(void) { return Type::FLOAT; }
-    template <>
-    Type GetType<double>(void) { return Type::DOUBLE; }
+    static Type GetType(void) { return Type::NONE; }
+
+    template <> Type GetType<int32_t>(void)  { return Type::INT32;  }
+    template <> Type GetType<uint32_t>(void) { return Type::UINT32; }
+    template <> Type GetType<uint16_t>(void) { return Type::UINT16; }
+    template <> Type GetType<uint8_t>(void)  { return Type::UINT8;  }
+    template <> Type GetType<float>(void)    { return Type::FLOAT;  }
+    template <> Type GetType<double>(void)   { return Type::DOUBLE; }
 
     static uint64_t getNumBytes(Type type)
     {
         switch (type)
         {
-        case Type::INT32:
-            return sizeof(int32_t);
-        case Type::UINT8:
-            return sizeof(uint8_t);
-        case Type::UINT16:
-            return sizeof(uint16_t);
-        case Type::UINT32:
-            return sizeof(uint32_t);
-        case Type::FLOAT:
-            return sizeof(float);
-        case Type::DOUBLE:
-            return sizeof(double);
+        case Type::INT32:  return sizeof(int32_t);
+        case Type::UINT8:  return sizeof(uint8_t);
+        case Type::UINT16: return sizeof(uint16_t);
+        case Type::UINT32: return sizeof(uint32_t);
+        case Type::FLOAT:  return sizeof(float);
+        case Type::DOUBLE: return sizeof(double);
+        
         default:
             assert(false);
             return 0;
