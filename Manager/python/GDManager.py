@@ -5,9 +5,9 @@ from sys import platform
 if platform == "win32":
     lib = ctypes.cdll.LoadLibrary('PyGDManager.dll')
 elif platform == "darwin":
-    lib = ctypes.cdll.LoadLibrary('libGDPyManager.dylib')
+    lib = ctypes.cdll.LoadLibrary('libPyGDManager.dylib')
 else:
-    lib = ctypes.cdll.LoadLibrary('libGDPyManager.so')
+    lib = ctypes.cdll.LoadLibrary('libPyGDManager.so')
 
 
 class Type:
