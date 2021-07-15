@@ -239,7 +239,11 @@ void GDEditor::recursiveTreeLoop(GDM::Group* group, ImGuiTreeNodeFlags nodeFlags
 
 void GDEditor::treeViewWindow(void)
 {
-    ImGui::Begin("Tree view");
+	const ImVec2 workpos = ImGui::GetMainViewport()->WorkPos;
+	ImGui::SetNextWindowPos({ workpos.x + 20 * DPI_FACTOR, workpos.y + 40 * DPI_FACTOR }, ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize({ 400 * DPI_FACTOR, 700 * DPI_FACTOR }, ImGuiCond_FirstUseEver);
+
+	ImGui::Begin("Tree view");
 
 	ImGuiTreeNodeFlags nodeFlags = ImGuiTreeNodeFlags_None;
 	nodeFlags |= ImGuiTreeNodeFlags_DefaultOpen;
@@ -290,6 +294,10 @@ void GDEditor::treeViewWindow(void)
 
 void GDEditor::detailWindow(void)
 {
+	const ImVec2 workpos = ImGui::GetMainViewport()->WorkPos;
+	ImGui::SetNextWindowPos({ workpos.x + 450 * DPI_FACTOR, workpos.y + 40 * DPI_FACTOR }, ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize({ 700 * DPI_FACTOR, 700 * DPI_FACTOR }, ImGuiCond_FirstUseEver);
+
 	ImGui::Begin("Details");
 
 	if (current == nullptr)

@@ -1,6 +1,5 @@
 #include "gdeditor.h"
 
-
 int main()
 {
 	GDEditor* editor = new GDEditor();

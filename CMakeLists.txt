@@ -6,7 +6,13 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Setup runtime output
+include(GNUInstallDirs)  # Provides some install path utilities
+
+if (NOT WIN32)
+    set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX})
+endif()
+
+# Setup build output
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)

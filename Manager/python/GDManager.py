@@ -3,11 +3,11 @@ import numpy as np
 from sys import platform
 
 if platform == "win32":
-    lib = ctypes.cdll.LoadLibrary('PyManager.dll')
+    lib = ctypes.cdll.LoadLibrary('PyGDManager.dll')
 elif platform == "darwin":
-    lib = ctypes.cdll.LoadLibrary('libPyManager.dylib')
+    lib = ctypes.cdll.LoadLibrary('libGDPyManager.dylib')
 else:
-    lib = ctypes.cdll.LoadLibrary('libPyManager.so')
+    lib = ctypes.cdll.LoadLibrary('libGDPyManager.so')
 
 
 class Type:
@@ -17,16 +17,18 @@ class Type:
 ###############################################################################
 ###############################################################################
 
+
 class Object:
     def __init__(self, label, type):
         self.label = label
         self.type = type
         self.obj = None
-        
+
         lib.getObjectLabel.argtypes, lib.getObjectLabel.restype = [ctypes.c_void_p], ctypes.c_char_p
-        lib.getObjectType.argtypes,  lib.getObjectType.restype  = [ctypes.c_void_p], ctypes.c_uint32
-        lib.getParent.argtypes,      lib.getParent.restype      = [ctypes.c_void_p], ctypes.c_void_p
-        lib.addDescription.argtypes, lib.addDescription.restype = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p], None
+        lib.getObjectType.argtypes,  lib.getObjectType.restype = [ctypes.c_void_p], ctypes.c_uint32
+        lib.getParent.argtypes,      lib.getParent.restype = [ctypes.c_void_p], ctypes.c_void_p
+        lib.addDescription.argtypes, lib.addDescription.restype = [
+            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p], None
         lib.getDescription.argtypes, lib.getDescription.restype = [ctypes.c_void_p, ctypes.c_char_p], ctypes.c_char_p
 
     def getLabel(self):
@@ -50,6 +52,7 @@ class Object:
 ###############################################################################
 ###############################################################################
 
+
 class Data(Object):
     def __init__(self, label, type):
         Object.__init__(self, label, type)
@@ -65,12 +68,18 @@ class Data(Object):
         lib.getFloat.argtypes,  lib.getFloat.restype = [ctypes.c_void_p], ctypes.c_void_p
         lib.getDouble.argtypes, lib.getDouble.restype = [ctypes.c_void_p], ctypes.c_void_p
 
-        lib.resetInt32.argtypes,  lib.resetInt32.restype = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
-        lib.resetUInt8.argtypes,  lib.resetUInt8.restype = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
-        lib.resetUInt16.argtypes, lib.resetUInt16.restype = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
-        lib.resetUInt32.argtypes, lib.resetUInt32.restype = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
-        lib.resetFloat.argtypes,  lib.resetFloat.restype = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
-        lib.resetDouble.argtypes, lib.resetDouble.restype = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
+        lib.resetInt32.argtypes,  lib.resetInt32.restype = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
+        lib.resetUInt8.argtypes,  lib.resetUInt8.restype = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
+        lib.resetUInt16.argtypes, lib.resetUInt16.restype = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
+        lib.resetUInt32.argtypes, lib.resetUInt32.restype = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
+        lib.resetFloat.argtypes,  lib.resetFloat.restype = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
+        lib.resetDouble.argtypes, lib.resetDouble.restype = [
+            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
 
         self.obj = lib.newData(label.encode('ascii'), type)
 
@@ -111,7 +120,6 @@ class Data(Object):
 
         else:
             raise TypeError
-
 
     def reset(self, array):
         typ = self.getType()
@@ -158,21 +166,27 @@ class Group(Object):
 
         lib.getObject.argtypes, lib.getObject.restype = [ctypes.c_void_p, ctypes.c_char_p], ctypes.c_void_p
 
-        lib.addGroup.argtypes,    lib.addGroup.restype    = [ctypes.c_void_p, ctypes.c_char_p], ctypes.c_void_p
+        lib.addGroup.argtypes,    lib.addGroup.restype = [ctypes.c_void_p, ctypes.c_char_p], ctypes.c_void_p
         lib.addGroupObj.argtypes, lib.addGroupObj.restype = [ctypes.c_void_p, ctypes.c_void_p], None
-        lib.addDataObj.argtypes,  lib.addDataObj.restype  = [ctypes.c_void_p, ctypes.c_void_p], None
+        lib.addDataObj.argtypes,  lib.addDataObj.restype = [ctypes.c_void_p, ctypes.c_void_p], None
 
-        lib.addInt32.argtypes,  lib.addInt32.restype = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
-        lib.addUInt8.argtypes,  lib.addUInt8.restype = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
-        lib.addUInt16.argtypes, lib.addUInt16.restype = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
-        lib.addUInt32.argtypes, lib.addUInt32.restype = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
-        lib.addFloat.argtypes,  lib.addFloat.restype = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
-        lib.addDouble.argtypes, lib.addDouble.restype = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
+        lib.addInt32.argtypes,  lib.addInt32.restype = [
+            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
+        lib.addUInt8.argtypes,  lib.addUInt8.restype = [
+            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
+        lib.addUInt16.argtypes, lib.addUInt16.restype = [
+            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
+        lib.addUInt32.argtypes, lib.addUInt32.restype = [
+            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
+        lib.addFloat.argtypes,  lib.addFloat.restype = [
+            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
+        lib.addDouble.argtypes, lib.addDouble.restype = [
+            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
 
         self.obj = lib.newGroup(name.encode('ascii'))
 
     #########################
-    ## Utilities
+    # Utilities
 
     def contains(self, label):
         return lib.groupContains(self.obj, label.encode('ascii'))
@@ -181,8 +195,8 @@ class Group(Object):
         lib.groupRemove(self.obj, label.encode('ascii'))
 
     #########################
-    ## Getting objects
-        
+    # Getting objects
+
     def get(self, label):
         ptr = lib.getObject(self.obj, label.encode('ascii'))
         tp = lib.getObjectType(ptr)
@@ -196,9 +210,8 @@ class Group(Object):
             dt.obj = ptr
             return dt
 
- 
-    def __getitem__(self, key): # To facilitate navigation
-        
+    def __getitem__(self, key):  # To facilitate navigation
+
         obj = self
         for label in key.split('/'):
             obj = obj.get(label)
@@ -206,7 +219,7 @@ class Group(Object):
         return obj
 
     #########################
-    ## Adding objects
+    # Adding objects
 
     def addGroup(self, label):
         var = Group(label)
@@ -215,7 +228,7 @@ class Group(Object):
 
     def addGroupObj(self, group):
         lib.addGroupObj(self.obj, group.obj)
-       
+
     def addDataObj(self, data):
         lib.addDataObj(self.obj, data.obj)
 
@@ -256,7 +269,6 @@ class Group(Object):
         else:
             raise TypeError
 
-
     ###########################################################################
     ###########################################################################
 
@@ -287,4 +299,3 @@ class File(Group):
 
     def save(self, filename):
         lib.saveFile(self.obj, filename.encode('ascii'))
-
