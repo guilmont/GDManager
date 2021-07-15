@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10.0)
 
 if (GDM_EDITOR)
+    set(GRENDER_TEMPLATE OFF)
     add_subdirectory(vendor/GRender)
 
     project(GDEditor)
@@ -12,7 +13,7 @@ if (GDM_EDITOR)
     target_link_libraries(${PROJECT_NAME} PRIVATE GDManager GRender)
     target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS)
     
-    # set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib/Release)
+    set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/lib/Release)
 
     install(TARGETS ${PROJECT_NAME} 
         CONFIGURATIONS Release 

@@ -8,10 +8,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(GNUInstallDirs)  # Provides some install path utilities
 
-if (NOT WIN32)
-    set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX})
-endif()
-
 # Setup build output
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
