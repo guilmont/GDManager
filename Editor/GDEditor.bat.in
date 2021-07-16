@@ -1,4 +1,4 @@
-
+@echo off
 cd @CMAKE_INSTALL_PREFIX@/bin
 
-.\GDEditor $1
+.\GDEditor %1
