@@ -1,4 +1,4 @@
-#include "gdm.h"
+#include "GDManager.h"
 
 static void printGroup(std::string step, GDM::Group &obj)
 {

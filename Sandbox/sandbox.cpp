@@ -1,4 +1,4 @@
-#include "gdm.h"
+#include "GDManager.h"
 
 using namespace GDM;
 

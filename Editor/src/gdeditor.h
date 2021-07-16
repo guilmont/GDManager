@@ -1,4 +1,4 @@
-#include "gdm.h"
+#include "GDManager.h"
 #include "GRender.h"
 
 class GDEditor : public GRender::Application
@@ -11,17 +11,18 @@ public:
 	void ImGuiLayer(void) override;
 	void ImGuiMenuLayer(void) override;
 
-private:
+	void open(const fs::path &inPath);
+	void save(const fs::path &outPath);
 
-	void recursiveTreeLoop(GDM::Group* group, ImGuiTreeNodeFlags nodeFlags);
+
+private:
+	void recursiveTreeLoop(GDM::Group *group, ImGuiTreeNodeFlags nodeFlags);
 	void treeViewWindow(void);
 
 	void detailWindow(void);
 
 	void addObject(GDM::Group *group);
-	
-	void open(const fs::path& inPath); 
-	void save(const fs::path& outPath);
+
 
 private:
 	bool
@@ -30,11 +31,12 @@ private:
 		view_data = false,
 		close_file = false;
 
-	struct {
-		GDM::Group* group = nullptr;
+	struct
+	{
+		GDM::Group *group = nullptr;
 		bool view = false;
 	} addObj;
 
-	GDM::Object* current = nullptr;
+	GDM::Object *current = nullptr;
 	GDM::File *arq = nullptr;
 };

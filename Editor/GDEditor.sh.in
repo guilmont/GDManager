@@ -1,0 +1,5 @@
+#/bin/bash
+
+cd @CMAKE_INSTALL_PREFIX@/bin
+
+./GDEditor $1
