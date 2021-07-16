@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.10.0)
 
 if (GDM_EDITOR)
-    set(GRENDER_TEMPLATE OFF)
     add_subdirectory(vendor/GRender)
 
     project(GDEditor)

@@ -323,8 +323,19 @@ void GDEditor::detailWindow(void)
 	if (ImGui::InputText("##label", locLabel, GDM::MAX_LABEL_SIZE, ImGuiInputTextFlags_EnterReturnsTrue))
 		current->rename(locLabel);
 
+
 	if (current->parent)
-		text("Parent:", current->parent->getLabel().c_str());
+	{
+		std::string par = "";
+		GDM::Object* obj = current;
+		while (obj->parent)
+		{
+			obj = obj->parent;
+			par = "/" + obj->getLabel() + par;
+		}
+
+		text("Path:", par.c_str());
+	}
 	
 	text("Type:", type2Label(current->getType()).c_str());
 
@@ -457,29 +468,32 @@ void GDEditor::detailWindow(void)
 	GDM::Type type = dt->getType();
 	uint8_t* ptr = dt->getRawBuffer(); // This is the raw buffer pointer
 
-	ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY | ImGuiTableFlags_ScrollX | ImGuiTableFlags_Borders;
+	uint32_t maxRows = std::min<uint32_t>(32, shape.height);
+	uint32_t maxCols = std::min<uint32_t>(32, shape.width);
 
-	if (ImGui::BeginTable("dataTable", shape.width + 1, flags, { 0, std::min<float>(256 * DPI_FACTOR, 1.5f * (shape.height + 1) * ImGui::GetFontSize()) }))
+	ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY | ImGuiTableFlags_ScrollX | ImGuiTableFlags_Borders | ImGuiTableFlags_NoHostExtendX | ImGuiTableFlags_NoHostExtendY;
+	if (ImGui::BeginTable("dataTable", maxCols + 1, flags))
 	{
 		ImGui::TableNextRow();
 
-		for (uint32_t column = 1; column <= shape.width; column++)
+		for (uint32_t column = 1; column <= maxCols; column++)
 		{
 			ImGui::TableSetColumnIndex(column);
 			fonts.text(std::to_string(column - 1).c_str(), "bold");
 		}
 
 		// Main body
-		uint64_t ct = 0;
-		for (uint32_t row = 0; row < shape.height; row++)
+		for (uint32_t row = 0; row < maxRows; row++)
 		{
 			ImGui::TableNextRow();
 
 			ImGui::TableSetColumnIndex(0);
 			fonts.text(std::to_string(row).c_str(), "bold");
 
-			for (uint32_t column = 0; column < shape.width; column++)
+			for (uint32_t column = 0; column < maxCols; column++)
 			{
+				uint32_t ct = row * shape.width + column;
+
 				ImGui::TableSetColumnIndex(column+1);
 
 				char buf[64] = { 0x00 };
