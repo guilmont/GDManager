@@ -37,7 +37,7 @@ install(TARGETS ${PROJECT_NAME}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
 
-install(EXPORT ${PROJECT_NAME}Config FILE ${PROJECT_NAME}Config.cmake DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/cmake)
+install(EXPORT ${PROJECT_NAME}Config FILE ${PROJECT_NAME}Config.cmake DESTINATION ${CMAKE_INSTALL_PREFIX}/share/cmake)
 
 
 #############################
@@ -62,11 +62,11 @@ if (GDM_PYTHON_BINDING)
 
     install(TARGETS ${PROJECT_NAME}
         CONFIGURATIONS Release
-            LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/python
-            RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/python
+            LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/share/python
+            RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/share/python
     )
 
-    install(FILES "python/GDManager.py" CONFIGURATIONS Release DESTINATION ${CMAKE_INSTALL_PREFIX}/python)
+    install(FILES "python/GDManager.py" CONFIGURATIONS Release DESTINATION ${CMAKE_INSTALL_PREFIX}/share/python)
 
 endif()
 

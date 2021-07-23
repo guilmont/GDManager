@@ -193,7 +193,7 @@ namespace GDM
 				var.shape = dt.shape;
 
 				// if data consumes less than 8 bytes, I'm going to save it here for efficiency
-				if (dt.numBytes < sizeof(uint64_t))
+				if (dt.numBytes <= sizeof(uint64_t))
 				{
 					var.dataAddress = 0;
 					uint8_t *v = reinterpret_cast<uint8_t *>(&var.dataAddress);
