@@ -8,10 +8,12 @@ namespace GDM
 	class File : public Group
 	{
 	public:
-		GDM_API File(const fs::path &path, State state = State::READ);
-		GDM_API ~File(void) = default;
+		GDM_API File(void) = default;
+		GDM_API File(const fs::path &path);
+		GDM_API ~File(void);
 
 		GDM_API void setGroup(Group &&group);
+		GDM_API void save(void);
 		GDM_API void close(void);
 
 		GDM_API const fs::path &getFilePath(void) const { return filePath; }
@@ -27,10 +29,8 @@ namespace GDM
 		void loadGroup(Group *obj, uint32_t numChildren, uint64_t dataAddress, uint64_t descAddress);
 
 		void readFile(void);
-		void saveFile(void);
 
 		const fs::path filePath; // used to check if saving address is different
-		State state;
 
 	private:
 		struct Header // The ordering is important for memory layout :: bigger tp smaller

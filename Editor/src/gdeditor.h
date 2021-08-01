@@ -11,8 +11,11 @@ public:
 	void ImGuiLayer(void) override;
 	void ImGuiMenuLayer(void) override;
 
-	void open(const fs::path &inPath);
-	void save(const fs::path &outPath);
+	void openFile(const fs::path& inPath); // So we can open files from the command line
+	
+
+private:
+	void saveFile(void);
 
 
 private:
@@ -27,9 +30,10 @@ private:
 private:
 	bool
 		view_imguidemo = false,
-		view_implotdemo = false,
-		view_data = false,
-		close_file = false;
+		view_implotdemo = false;
+
+
+	std::string	close_file = "";
 
 	struct
 	{
@@ -37,6 +41,8 @@ private:
 		bool view = false;
 	} addObj;
 
-	GDM::Object *current = nullptr;
-	GDM::File *arq = nullptr;
+	GDM::Object* currentObj = nullptr;
+	GDM::File* currentFile = nullptr;
+
+	std::map<fs::path, GDM::File> vFile;
 };

@@ -253,22 +253,47 @@ namespace GDM
         m_children.erase(it);
     }
 
-    Object &Group::operator[](const std::string &label)
-    {
+    Object& Group::operator[](const std::string &label) {
         uint64_t
             posZero = 0,
             posEnd = label.find_first_of('/');
 
-        const Group *obj = this;
+        const Group* obj = this;
         while (posEnd != std::string::npos)
         {
-            const std::string &sub = label.substr(posZero, posEnd - posZero);
+            const std::string& sub = label.substr(posZero, posEnd - posZero);
+            assert(sub.size() < MAX_LABEL_SIZE);
+
+            auto it = obj->m_children.find(sub);
+            assert(it != obj->m_children.end());               // Does it exist?
+            assert(it->second->getType() == Type::GROUP); // Make sure it is a group
+            obj = reinterpret_cast<const Group*>(it->second);
+
+            posZero = posEnd + 1;
+            posEnd = label.find('/', posZero);
+        }
+
+        auto out = obj->m_children.find(label.substr(posZero));
+        assert(out != obj->m_children.end()); // Does it exist?
+
+        return *(out->second);
+    }
+
+    const Object& Group::operator[](const std::string& label) const { 
+        uint64_t
+            posZero = 0,
+            posEnd = label.find_first_of('/');
+
+        const Group* obj = this;
+        while (posEnd != std::string::npos)
+        {
+            const std::string& sub = label.substr(posZero, posEnd - posZero);
             assert(sub.size() < MAX_LABEL_SIZE);
 
             auto it = obj->m_children.find(sub);
             assert(it != m_children.end());               // Does it exist?
             assert(it->second->getType() == Type::GROUP); // Make sure it is a group
-            obj = reinterpret_cast<const Group *>(it->second);
+            obj = reinterpret_cast<const Group*>(it->second);
 
             posZero = posEnd + 1;
             posEnd = label.find('/', posZero);
@@ -277,10 +302,7 @@ namespace GDM
         auto it = obj->m_children.find(label.substr(posZero));
         assert(it != m_children.end()); // Does it exist?
 
-        Type tp = it->second->getType();
         return *(it->second);
     }
-
-    const Object &Group::operator[](const std::string &label) const { return this->operator[](label); }
 
 }

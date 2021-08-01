@@ -3,13 +3,15 @@
 
 using namespace GDM;
 
-// #include <corecrt_math_defines.h>
+#if _WIN32
+	#include <corecrt_math_defines.h>
+#endif
 
 int main(void)
 {
-
+	fs::path filename = "test.gdm";
 	{
-		GDM::File arq("test.gdm", GDM::State::WRITE);
+		File arq(filename);
 
 		arq.add<double>("this is pi", M_PI);
 
@@ -37,14 +39,14 @@ int main(void)
 		float A[4] = {0.251f, 0.027f, 0.334f, 0.033f};
 		t12.add<float>("A", A, {2, 2});
 
-		arq.close();
+		arq.save();
 	}
 
 	/************************************************/
 
 	{
-		GDM::File arq("test.gdm");
-		const Data &ola = arq["hoxa/hic/resolution"].cast<Data>();
+		File arq(filename);
+		/*const Data &ola = arq["hoxa/hic/resolution"].cast<Data>();
 		pout(int(ola.getType()));
 		pout(ola.getLabel());
 
@@ -52,22 +54,23 @@ int main(void)
 			Group &group = arq.getGroup("hoxa/cellLines/T1-T2");
 			const double *loc = group.getData("distance").getArray<double>();
 			pout(loc[0], loc[1]);
-			pout(group.getData("distance").get<double>());
+			pout(group.getData("distance").getArray<double>());
 		}	
 
 		{
 			Group &group = arq["hoxa/cellLines/T1-T2"].cast<Group>();
 			const uint32_t *loc = group.getData("locations").getArray<uint32_t>();
 			pout(loc[0], loc[1]);
-		}	
+		}	*/
 
+		//Data &pi = arq.getData("this is pi");
 
+		arq.remove("this is pi");
 
-		Data &pi = arq.getData("this is pi");
+		/*pout(pi.get<double>());*/
 
-		pout(pi.get<double>());
+		arq.save();
 
-		arq.close();
 	}
 
 	return EXIT_SUCCESS;

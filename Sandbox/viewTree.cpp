@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 
 	GDM::pout("Welcome to GDManager!!");
 
-	GDM::File gdm(argv[1], GDM::State::READ);
+	GDM::File gdm(argv[1]);
 	printGroup("  ", gdm);
 
 	return EXIT_SUCCESS;

@@ -14,7 +14,7 @@ else:
 
 class Type:
     # Important to identical to cpp enum class Type
-    NONE, GROUP, INT32, INT64, UINT8, UINT16, UINT32, UINT64, FLOAT, DOUBLE = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+    NONE, GROUP, INT32, UINT8, UINT16, UINT32, FLOAT, DOUBLE, INT64, UINT64 = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
 
 
 class State:

@@ -58,25 +58,18 @@ namespace GDM
         uint32_t height, width;
     };
 
-    enum class State: uint32_t
-    {
-        NONE,
-        READ,
-        WRITE
-    };
-
     enum class Type : uint32_t
     {
-        NONE = 0,
-        GROUP = 1,
-        INT32 = 2,
-        INT64 = 3,
-        UINT8 = 4,
-        UINT16 = 5,
-        UINT32 = 6,
-        UINT64 = 7,
-        FLOAT = 8,
-        DOUBLE = 9,
+        NONE,
+        GROUP,
+        INT32,
+        UINT8,
+        UINT16,
+        UINT32,
+        FLOAT,
+        DOUBLE,
+        INT64,
+        UINT64,
     };
 
     enum class Compression : uint32_t

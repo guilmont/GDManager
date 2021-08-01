@@ -33,10 +33,10 @@ namespace GDM
 
         // And maybe we would like to cast into another type
         template <typename TP>
-        GDM_API TP &cast(void) { return *reinterpret_cast<TP *>(this); }
+        TP &cast(void) { return *reinterpret_cast<TP *>(this); }
 
         template <typename TP>
-        GDM_API const TP &cast(void) const { return *reinterpret_cast<const TP *>(this); }
+        const TP &cast(void) const { return *reinterpret_cast<const TP *>(this); }
 
     protected:
         std::string label = "";
@@ -66,7 +66,10 @@ namespace GDM
         GDM_API Data &operator=(Data &&mat) noexcept;
 
         // utilities
-        GDM_API const Shape &getShape(void) const { return shape; }
+        GDM_API const Shape& getShape(void) const { return shape; }
+        GDM_API uint64_t getSizeBytes(void) const { return numBytes; }
+        GDM_API bool isLoaded(void) const { return buffer != nullptr; }
+
 
         // setting data
         template <typename TP>
@@ -115,8 +118,8 @@ namespace GDM
         GDM_API Group &operator=(const Group &mat);
         GDM_API Group &operator=(Group &&mat) noexcept;
 
-        const Object &operator[](const std::string &label) const; // return child object
-        Object &operator[](const std::string &label);             // returns child object
+        GDM_API const Object &operator[](const std::string &label) const; // return child object
+        GDM_API Object &operator[](const std::string &label);             // returns child object
 
         // utilities
         GDM_API bool contains(const std::string &name) const;
@@ -148,8 +151,8 @@ namespace GDM
         GDM_API std::unordered_map<std::string, Object *> &children() { return m_children; }
 
     private:
-        std::unordered_map<std::string, Object *>
-            m_children;
+        std::unordered_map<std::string, Object *> m_children;
+
     };
 
     ///////////////////////////////////////////////////////////////////////////

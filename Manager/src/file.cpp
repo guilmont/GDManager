@@ -2,22 +2,26 @@
 
 namespace GDM
 {
-	File::File(const fs::path &path, State state) : filePath(path), state(state)
+	File::File(const fs::path &path) : filePath(path)
 	{
-		if (state == State::READ)
+		if (fs::exists(path))
+		{
+			pout("Openning file:", filePath.string(), "\n");
 			readFile();
+		}
+	}
+
+	File::~File(void) { close(); }
+
+	void File::close(void)
+	{
+		if (gdmFile.is_open())
+			gdmFile.close();
 	}
 
 	void File::readFile(void)
 	{
-		if (!fs::exists(filePath))
-		{
-			pout("ERROR: File doesn't exist!!", __FUNCTION__);
-			exit(EXIT_FAILURE);
-		}
-			
-		pout("Openning file:", filePath.string(), "\n");
-
+		
 		gdmFile.open(filePath, std::fstream::binary);
 		assert(gdmFile.good());
 
@@ -37,14 +41,8 @@ namespace GDM
 		loadGroup(this, root.shape.height, root.dataAddress, root.descriptionAddress);
 	}
 
-	void File::saveFile(void)
+	void File::save(void)
 	{
-		if (fs::exists(filePath))
-		{
-			pout("ERROR: File already exists! :: function:", __FUNCTION__);
-			exit(EXIT_FAILURE);
-		}
-
 		// Clearing data, so we can save fresh
 		vHeader.clear();
 		vData.clear();
@@ -89,7 +87,15 @@ namespace GDM
 
 		// It is time to send everything into a file
 		pout("Saving data:", filePath.string());
-		std::ofstream output(filePath, std::ofstream::binary | std::ofstream::trunc);
+
+		fs::path auxName;
+		if (fs::exists(filePath))
+			auxName = filePath.parent_path() / ("." + filePath.filename().string());
+		
+		else
+			auxName = filePath;
+
+		std::ofstream output(auxName, std::ofstream::binary | std::ofstream::trunc);
 
 		output.write(GDM_SIGNATURE, strlen(GDM_SIGNATURE));
 
@@ -126,6 +132,14 @@ namespace GDM
 		}
 
 		output.close();
+
+		if (auxName != filePath)
+		{
+			close();
+			fs::rename(auxName, filePath);
+			readFile(); // We might want to continue using this file
+		}
+
 	}
 
 	void File::setGroup(Group &&group)
@@ -140,15 +154,6 @@ namespace GDM
 		group.m_description.clear();
 	}
 
-	void File::close(void)
-	{
-		if (state == State::WRITE)
-			saveFile();
-		
-		if (gdmFile.is_open())
-			gdmFile.close();
-
-	}
 
 	void File::genDescriptionBuffer(uint64_t headerID, const Description &description)
 	{
