@@ -68,7 +68,8 @@ extern "C"
 
     ///////////////////////////////////////////////////////
     // File
-    GDM_API GDM::File *newFile(const char *filepath, uint32_t state) { return new GDM::File(fs::path(filepath), GDM::State(state)); }
-    GDM_API const char *getFilePath(GDM::File *file) { return file->getFilePath().c_str(); }
-    GDM_API void close(GDM::File *file) { file->close(); }
+    GDM_API GDM::File *newFile(const char *filepath) { return new GDM::File(fs::path(filepath)); }
+    GDM_API const char *getFilePath(GDM::File *file) { return file->getFilePath().string().c_str(); }
+    GDM_API void saveFile(GDM::File *file) { file->save(); }
+    GDM_API void closeFile(GDM::File *file) { file->close(); }
 }

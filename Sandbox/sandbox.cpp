@@ -4,7 +4,7 @@
 using namespace GDM;
 
 #if _WIN32
-	#include <corecrt_math_defines.h>
+#include <corecrt_math_defines.h>
 #endif
 
 int main(void)
@@ -46,7 +46,7 @@ int main(void)
 
 	{
 		File arq(filename);
-		/*const Data &ola = arq["hoxa/hic/resolution"].cast<Data>();
+		const Data &ola = arq["hoxa/hic/resolution"].cast<Data>();
 		pout(int(ola.getType()));
 		pout(ola.getLabel());
 
@@ -55,22 +55,20 @@ int main(void)
 			const double *loc = group.getData("distance").getArray<double>();
 			pout(loc[0], loc[1]);
 			pout(group.getData("distance").getArray<double>());
-		}	
+		}
 
 		{
 			Group &group = arq["hoxa/cellLines/T1-T2"].cast<Group>();
 			const uint32_t *loc = group.getData("locations").getArray<uint32_t>();
 			pout(loc[0], loc[1]);
-		}	*/
+		}
 
-		//Data &pi = arq.getData("this is pi");
+		Data &pi = arq.getData("this is pi");
+		pout(pi.get<double>());
 
 		arq.remove("this is pi");
 
-		/*pout(pi.get<double>());*/
-
 		arq.save();
-
 	}
 
 	return EXIT_SUCCESS;

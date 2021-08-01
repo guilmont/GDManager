@@ -32,7 +32,7 @@ def createFile():
     A = np.array([[0.251, 0.027], [0.334, 0.033]])
     t12.addData("A", A)
 
-    arq.close()
+    arq.save()
 
 
 def readFile():
@@ -53,8 +53,6 @@ def readFile():
 
     pi = arq.getData("this is pi")
     print(pi.get()[0, 0])
-
-    arq.close()
 
 
 if __name__ == "__main__":
