@@ -28,9 +28,15 @@ namespace GDM
         // description interations
         GDM_API Description &descriptions(void) { return m_description; }
 
-
         // We might want to now the parent object as well
-        Group* parent = nullptr;
+        Group *parent = nullptr;
+
+        // And maybe we would like to cast into another type
+        template <typename TP>
+        GDM_API TP &cast(void) { return *reinterpret_cast<TP *>(this); }
+
+        template <typename TP>
+        GDM_API const TP &cast(void) const { return *reinterpret_cast<const TP *>(this); }
 
     protected:
         std::string label = "";
@@ -38,7 +44,6 @@ namespace GDM
 
         // We can always add some sort of description to the object
         Description m_description;
-
     };
 
     ///////////////////////////////////////////////////////
@@ -77,7 +82,7 @@ namespace GDM
         template <typename TP>
         const TP *getArray(void);
 
-        GDM_API uint8_t* getRawBuffer(void);
+        GDM_API uint8_t *getRawBuffer(void);
 
         // Release memory in RAM in case data is to big
         GDM_API void release(void);
@@ -110,28 +115,30 @@ namespace GDM
         GDM_API Group &operator=(const Group &mat);
         GDM_API Group &operator=(Group &&mat) noexcept;
 
+        const Object &operator[](const std::string &label) const; // return child object
+        Object &operator[](const std::string &label);             // returns child object
+
         // utilities
         GDM_API bool contains(const std::string &name) const;
 
-        template <typename TP>
-        TP &get(const std::string &label); // returns child object
+        GDM_API Group &getGroup(const std::string &label);
+        GDM_API const Group &getGroup(const std::string &label) const;
 
-        template <typename TP>
-        const TP &get(const std::string &label) const; // return child object
+        GDM_API Data &getData(const std::string &label);
+        GDM_API const Data &getData(const std::string &label) const;
 
         // Add new groups to current group
-        GDM_API Group& addGroup(const std::string& label);
+        GDM_API Group &addGroup(const std::string &label);
         GDM_API void addGroup(Group *group);
-        
+
         // Adding data to group
         GDM_API void addData(Data *data);
 
+        template <typename TP>
+        Data& add(const std::string &label, const TP *value, Shape shape);
 
         template <typename TP>
-        Data &add(const std::string &label, const TP *value, Shape shape);
-
-        template <typename TP>
-        Data &add(const std::string &label, TP value);
+        Data& add(const std::string &label, TP value);
 
         // remove elements
         GDM_API void remove(const std::string &label);
@@ -141,7 +148,8 @@ namespace GDM
         GDM_API std::unordered_map<std::string, Object *> &children() { return m_children; }
 
     private:
-        std::unordered_map<std::string, Object *> m_children;
+        std::unordered_map<std::string, Object *>
+            m_children;
     };
 
     ///////////////////////////////////////////////////////////////////////////
@@ -151,24 +159,44 @@ namespace GDM
     template <typename TP>
     static Type GetType(void) { return Type::NONE; }
 
-    template <> Type GetType<int32_t>(void)  { return Type::INT32;  }
-    template <> Type GetType<uint32_t>(void) { return Type::UINT32; }
-    template <> Type GetType<uint16_t>(void) { return Type::UINT16; }
-    template <> Type GetType<uint8_t>(void)  { return Type::UINT8;  }
-    template <> Type GetType<float>(void)    { return Type::FLOAT;  }
-    template <> Type GetType<double>(void)   { return Type::DOUBLE; }
+    template <>
+    Type GetType<int32_t>(void) { return Type::INT32; }
+    template <>
+    Type GetType<int64_t>(void) { return Type::INT64; }
+    template <>
+    Type GetType<uint32_t>(void) { return Type::UINT32; }
+    template <>
+    Type GetType<uint64_t>(void) { return Type::UINT64; }
+    template <>
+    Type GetType<uint16_t>(void) { return Type::UINT16; }
+    template <>
+    Type GetType<uint8_t>(void) { return Type::UINT8; }
+    template <>
+    Type GetType<float>(void) { return Type::FLOAT; }
+    template <>
+    Type GetType<double>(void) { return Type::DOUBLE; }
 
     static uint64_t getNumBytes(Type type)
     {
         switch (type)
         {
-        case Type::INT32:  return sizeof(int32_t);
-        case Type::UINT8:  return sizeof(uint8_t);
-        case Type::UINT16: return sizeof(uint16_t);
-        case Type::UINT32: return sizeof(uint32_t);
-        case Type::FLOAT:  return sizeof(float);
-        case Type::DOUBLE: return sizeof(double);
-        
+        case Type::INT32:
+            return sizeof(int32_t);
+        case Type::INT64:
+            return sizeof(int64_t);
+        case Type::UINT8:
+            return sizeof(uint8_t);
+        case Type::UINT16:
+            return sizeof(uint16_t);
+        case Type::UINT32:
+            return sizeof(uint32_t);
+        case Type::UINT64:
+            return sizeof(uint64_t);
+        case Type::FLOAT:
+            return sizeof(float);
+        case Type::DOUBLE:
+            return sizeof(double);
+
         default:
             assert(false);
             return 0;
@@ -195,7 +223,7 @@ namespace GDM
 
         if (ptr != nullptr)
         {
-            const uint8_t* var = reinterpret_cast<const uint8_t*>(ptr);
+            const uint8_t *var = reinterpret_cast<const uint8_t *>(ptr);
             std::copy(var, var + numBytes, buffer);
         }
     }
@@ -211,7 +239,7 @@ namespace GDM
     }
 
     template <typename TP>
-    const TP *Data::getArray(void)
+    const TP *Data::getArray(void) 
     {
         assert(GetType<TP>() == type);
         return reinterpret_cast<const TP *>(getRawBuffer());
@@ -219,27 +247,6 @@ namespace GDM
 
     ///////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////
-
-    template <typename TP>
-    TP &Group::get(const std::string &label)
-    {
-        assert(label.size() < MAX_LABEL_SIZE);
-
-        auto it = m_children.find(label);
-        assert(it != m_children.end()); // Does it exist?
-        return *reinterpret_cast<TP *>(it->second);
-    }
-
-    template <typename TP>
-    const TP &Group::get(const std::string &label) const
-    {
-        assert(label.size() < MAX_LABEL_SIZE);
-
-        auto it = m_children.find(label);
-        assert(it != m_children.end()); // Does it exist?
-
-        return *reinterpret_cast<TP *>(it->second);
-    }
 
     template <typename TP>
     Data &Group::add(const std::string &label, const TP *value, Shape shape)
@@ -271,5 +278,4 @@ namespace GDM
         return *var;
     }
 
- 
 } // namespace

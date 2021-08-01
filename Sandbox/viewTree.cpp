@@ -16,12 +16,16 @@ static void printGroup(std::string step, GDM::Group &obj)
 		{
 			GDM::Data *data = reinterpret_cast<GDM::Data *>(ptr);
 			GDM::Shape shape = data->getShape();
+
 			printf("%s%s :: ", step.c_str(), label.c_str());
 
 			switch (data->getType())
 			{
 			case GDM::Type::INT32:
 				printf("DATA (INT32 {%d,%d}) >> ", shape.height, shape.width);
+				break;
+			case GDM::Type::INT64:
+				printf("DATA (INT64 {%d,%d}) >> ", shape.height, shape.width);
 				break;
 			case GDM::Type::UINT8:
 				printf("DATA (UINT8 {%d,%d}) >> ", shape.height, shape.width);
@@ -31,6 +35,9 @@ static void printGroup(std::string step, GDM::Group &obj)
 				break;
 			case GDM::Type::UINT32:
 				printf("DATA (UINT32 {%d,%d}) >> ", shape.height, shape.width);
+				break;
+			case GDM::Type::UINT64:
+				printf("DATA (UINT64 {%d,%d}) >> ", shape.height, shape.width);
 				break;
 			case GDM::Type::FLOAT:
 				printf("DATA (FLOAT {%d,%d}) >> ", shape.height, shape.width);
@@ -64,13 +71,13 @@ int main(int argc, char *argv[])
 {
 	if (argc < 2)
 	{
-		printf("ERROR: Missing GDM-file\n\tUsage: ./ViewTree $(filename)\n\n");
+		printf("ERROR: Missing GDM-file\n\tUsage: ./GDMTree $(filename)\n\n");
 		return EXIT_FAILURE;
 	}
 
-	printf("Welcome to GDManager\nFile: %s\n\n", argv[1]);
+	GDM::pout("Welcome to GDManager!!");
 
-	GDM::File gdm(argv[1]);
+	GDM::File gdm(argv[1], GDM::State::READ);
 	printGroup("  ", gdm);
 
 	return EXIT_SUCCESS;

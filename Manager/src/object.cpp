@@ -2,7 +2,7 @@
 
 namespace GDM
 {
-    GDM_API void Object::rename(const std::string& name)
+    void Object::rename(const std::string &name)
     {
         if (parent)
         {
@@ -32,7 +32,7 @@ namespace GDM
     ///////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////
 
-    Data::Data(const std::string& name, Type type) : Object(name, type) {}
+    Data::Data(const std::string &name, Type type) : Object(name, type) {}
 
     Data::~Data(void)
     {
@@ -93,9 +93,7 @@ namespace GDM
         return *this;
     }
 
-
-
-    uint8_t* Data::getRawBuffer(void)
+    uint8_t *Data::getRawBuffer(void) 
     {
         if (!buffer)
         {
@@ -104,7 +102,7 @@ namespace GDM
             // Getting compression method
             Compression comp;
             gdmFile->seekg(pos);
-            gdmFile->read(reinterpret_cast<char*>(&comp), sizeof(Compression));
+            gdmFile->read(reinterpret_cast<char *>(&comp), sizeof(Compression));
             pos += sizeof(Compression);
 
             assert(comp == Compression::NONE); // TODO: Implement other types of compression
@@ -112,7 +110,7 @@ namespace GDM
             // Getting compressed number of bytes -> not important for now
             uint64_t nBytes;
             gdmFile->seekg(pos);
-            gdmFile->read(reinterpret_cast<char*>(&nBytes), sizeof(uint64_t));
+            gdmFile->read(reinterpret_cast<char *>(&nBytes), sizeof(uint64_t));
             pos += sizeof(uint64_t);
 
             assert(nBytes == this->numBytes); // If not compression is used, theses values should be the same
@@ -120,7 +118,7 @@ namespace GDM
             // Importing data bytes
             buffer = new uint8_t[numBytes];
             gdmFile->seekg(pos);
-            gdmFile->read(reinterpret_cast<char*>(buffer), numBytes);
+            gdmFile->read(reinterpret_cast<char *>(buffer), numBytes);
         }
 
         return buffer;
@@ -139,10 +137,11 @@ namespace GDM
         }
     }
 
-    ///////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////
+    /*********************************************************************************************/
+    /*********************************************************************************************/
+    /*********************************************************************************************/
 
-    Group::Group(const std::string& name) : Object(name, Type::GROUP) {}
+    Group::Group(const std::string &name) : Object(name, Type::GROUP) {}
 
     Group::~Group(void)
     {
@@ -200,12 +199,13 @@ namespace GDM
         return *this;
     }
 
+    /*******************************************************************************************/
+
     bool Group::contains(const std::string &label) const
     {
         assert(label.size() < MAX_LABEL_SIZE);
         return m_children.find(label) != m_children.end();
     }
-
 
     Group &Group::addGroup(const std::string &label)
     {
@@ -219,9 +219,9 @@ namespace GDM
         return *ptr;
     }
 
-    GDM_API void Group::addGroup(Group* group)
+    void Group::addGroup(Group *group)
     {
-        const std::string& label = group->getLabel();
+        const std::string &label = group->getLabel();
         assert(m_children.find(label) == m_children.end());
 
         group->parent = this;
@@ -229,10 +229,9 @@ namespace GDM
         m_children.emplace(label, std::move(group));
     }
 
- 
-    GDM_API void Group::addData(Data *data)
+    void Group::addData(Data *data)
     {
-        const std::string& label = data->getLabel();
+        const std::string &label = data->getLabel();
         assert(m_children.find(label) == m_children.end());
 
         data->parent = this;
@@ -240,15 +239,48 @@ namespace GDM
         m_children.emplace(label, std::move(data));
     }
 
+    const Group &Group::getGroup(const std::string &label) const { return reinterpret_cast<const Group &>(this->operator[](label)); }
+    Group &Group::getGroup(const std::string &label) { return reinterpret_cast<Group &>(this->operator[](label)); }
+
+    const Data &Group::getData(const std::string &label) const { return reinterpret_cast<const Data &>(this->operator[](label)); }
+    Data &Group::getData(const std::string &label) { return reinterpret_cast<Data &>(this->operator[](label)); }
+
     void Group::remove(const std::string &label)
     {
         assert(label.size() < MAX_LABEL_SIZE);
-
         auto it = m_children.find(label);
-
-        assert( it != m_children.end());
+        assert(it != m_children.end());
         m_children.erase(it);
     }
 
- 
+    Object &Group::operator[](const std::string &label)
+    {
+        uint64_t
+            posZero = 0,
+            posEnd = label.find_first_of('/');
+
+        const Group *obj = this;
+        while (posEnd != std::string::npos)
+        {
+            const std::string &sub = label.substr(posZero, posEnd - posZero);
+            assert(sub.size() < MAX_LABEL_SIZE);
+
+            auto it = obj->m_children.find(sub);
+            assert(it != m_children.end());               // Does it exist?
+            assert(it->second->getType() == Type::GROUP); // Make sure it is a group
+            obj = reinterpret_cast<const Group *>(it->second);
+
+            posZero = posEnd + 1;
+            posEnd = label.find('/', posZero);
+        }
+
+        auto it = obj->m_children.find(label.substr(posZero));
+        assert(it != m_children.end()); // Does it exist?
+
+        Type tp = it->second->getType();
+        return *(it->second);
+    }
+
+    const Object &Group::operator[](const std::string &label) const { return this->operator[](label); }
+
 }

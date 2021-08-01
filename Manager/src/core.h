@@ -10,7 +10,6 @@
 #include <filesystem>
 namespace fs = std::filesystem;
 
-
 #include <initializer_list>
 #include <memory>
 #include <unordered_map>
@@ -18,16 +17,14 @@ namespace fs = std::filesystem;
 #include <typeinfo>
 
 #ifdef WIN32
-    #ifdef GDM_BUILD_DLL
-        #define GDM_API __declspec(dllexport)
-    #else
-        #define GDM_API __declspec(dllimport)
-    #endif
+#ifdef GDM_BUILD_DLL
+#define GDM_API __declspec(dllexport)
 #else
-    #define GDM_API
+#define GDM_API __declspec(dllimport)
 #endif
-
-
+#else
+#define GDM_API
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // SOME DEFINITIONS WE WILL NEED EVERYWHERE
@@ -36,10 +33,10 @@ namespace GDM
 {
 
     // Some parameters to help saving to file
-    inline constexpr uint32_t MAX_LABEL_SIZE = 32;                    // maximum number of characters allowed for a label
-    inline constexpr uint64_t NO_DESCRIPTION = 0xffffffffffffffff;    // addresss used when no description is provided to object
+    inline constexpr uint32_t MAX_LABEL_SIZE = 32;                 // maximum number of characters allowed for a label
+    inline constexpr uint64_t NO_DESCRIPTION = 0xffffffffffffffff; // addresss used when no description is provided to object
 
-    inline const char* GDM_SIGNATURE = "GDManager (ver 1) by GM Oliveira";
+    inline const char *GDM_SIGNATURE = "GDManager (ver 1) by GM Oliveira";
 
     /////////////////////////
 
@@ -52,7 +49,6 @@ namespace GDM
         pout(args...);
     }
 
-
     /////////////////////////
 
     using Description = std::map<std::string, std::string>;
@@ -62,16 +58,25 @@ namespace GDM
         uint32_t height, width;
     };
 
-    enum class Type : uint32_t
+    enum class State: uint32_t
     {
         NONE,
-        GROUP,
-        INT32,
-        UINT8,
-        UINT16,
-        UINT32,
-        FLOAT,
-        DOUBLE,
+        READ,
+        WRITE
+    };
+
+    enum class Type : uint32_t
+    {
+        NONE = 0,
+        GROUP = 1,
+        INT32 = 2,
+        INT64 = 3,
+        UINT8 = 4,
+        UINT16 = 5,
+        UINT32 = 6,
+        UINT64 = 7,
+        FLOAT = 8,
+        DOUBLE = 9,
     };
 
     enum class Compression : uint32_t
@@ -80,6 +85,5 @@ namespace GDM
         ZIP,
         LZW
     };
-
 
 }
