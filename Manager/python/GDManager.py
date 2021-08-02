@@ -77,22 +77,14 @@ class Data(Object):
         lib.getFloat.argtypes,  lib.getFloat.restype = [ctypes.c_void_p], ctypes.c_void_p
         lib.getDouble.argtypes, lib.getDouble.restype = [ctypes.c_void_p], ctypes.c_void_p
 
-        lib.resetInt32.argtypes,  lib.resetInt32.restype = [
-            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
-        lib.resetInt64.argtypes,  lib.resetInt64.restype = [
-            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
-        lib.resetUInt8.argtypes,  lib.resetUInt8.restype = [
-            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
-        lib.resetUInt16.argtypes, lib.resetUInt16.restype = [
-            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
-        lib.resetUInt32.argtypes, lib.resetUInt32.restype = [
-            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
-        lib.resetUInt64.argtypes, lib.resetUInt64.restype = [
-            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
-        lib.resetFloat.argtypes,  lib.resetFloat.restype = [
-            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
-        lib.resetDouble.argtypes, lib.resetDouble.restype = [
-            ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
+        lib.resetInt32.argtypes,  lib.resetInt32.restype = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
+        lib.resetInt64.argtypes,  lib.resetInt64.restype = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
+        lib.resetUInt8.argtypes,  lib.resetUInt8.restype = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
+        lib.resetUInt16.argtypes, lib.resetUInt16.restype = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
+        lib.resetUInt32.argtypes, lib.resetUInt32.restype = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
+        lib.resetUInt64.argtypes, lib.resetUInt64.restype = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
+        lib.resetFloat.argtypes,  lib.resetFloat.restype = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
+        lib.resetDouble.argtypes, lib.resetDouble.restype = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], None
 
         self.obj = lib.newData(label.encode('ascii'), type)
 
@@ -197,24 +189,17 @@ class Group(Object):
 
         lib.addGroup.argtypes,    lib.addGroup.restype = [ctypes.c_void_p, ctypes.c_char_p], ctypes.c_void_p
         lib.addGroupObj.argtypes, lib.addGroupObj.restype = [ctypes.c_void_p, ctypes.c_void_p], None
-        lib.addDataObj.argtypes,  lib.addDataObj.restype = [ctypes.c_void_p, ctypes.c_void_p], None
+        lib.copyDataObj.argtypes,  lib.copyDataObj.restype = [ctypes.c_void_p, ctypes.c_void_p], None
+        lib.moveDataObj.argtypes,  lib.moveDataObj.restype = [ctypes.c_void_p, ctypes.c_void_p], None
 
-        lib.addInt32.argtypes,  lib.addInt32.restype = [
-            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
-        lib.addInt64.argtypes,  lib.addInt64.restype = [
-            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
-        lib.addUInt8.argtypes,  lib.addUInt8.restype = [
-            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
-        lib.addUInt16.argtypes, lib.addUInt16.restype = [
-            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
-        lib.addUInt32.argtypes, lib.addUInt32.restype = [
-            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
-        lib.addUInt64.argtypes, lib.addUInt64.restype = [
-            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
-        lib.addFloat.argtypes,  lib.addFloat.restype = [
-            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
-        lib.addDouble.argtypes, lib.addDouble.restype = [
-            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
+        lib.addInt32.argtypes,  lib.addInt32.restype = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
+        lib.addInt64.argtypes,  lib.addInt64.restype = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
+        lib.addUInt8.argtypes,  lib.addUInt8.restype = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
+        lib.addUInt16.argtypes, lib.addUInt16.restype = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
+        lib.addUInt32.argtypes, lib.addUInt32.restype = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
+        lib.addUInt64.argtypes, lib.addUInt64.restype = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
+        lib.addFloat.argtypes,  lib.addFloat.restype = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
+        lib.addDouble.argtypes, lib.addDouble.restype = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_void_p
 
         self.obj = lib.newGroup(name.encode('ascii'))
 
@@ -273,8 +258,11 @@ class Group(Object):
     def addGroupObj(self, group):
         lib.addGroupObj(self.obj, group.obj)
 
-    def addDataObj(self, data):
-        lib.addDataObj(self.obj, data.obj)
+    def copyData(self, data):
+        lib.copyDataObj(self.obj, data.obj)
+
+    def moveData(self, data):
+        lib.moveDataObj(self.obj, data.obj)
 
     def addData(self, label, array):
         if (np.isscalar(array)):

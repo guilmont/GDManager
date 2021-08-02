@@ -13,7 +13,7 @@ int main(void)
 	{
 		File arq(filename);
 
-		arq.add<double>("this is pi", M_PI);
+		Data &pi = arq.add<double>("this is pi", M_PI);
 
 		Group &hoxa = arq.addGroup("hoxa");
 
@@ -46,9 +46,17 @@ int main(void)
 
 	{
 		File arq(filename);
+
+		Data& D = arq.getData("hoxa/cellLines/T1-T2/D");
+		arq.moveData(&D);
+
+		Data& A = arq.getData("hoxa/cellLines/T1-T2/A");
+		arq.copyData(&A);
+
 		const Data &ola = arq["hoxa/hic/resolution"].cast<Data>();
 		pout(int(ola.getType()));
 		pout(ola.getLabel());
+
 
 		{
 			Group &group = arq.getGroup("hoxa/cellLines/T1-T2");
@@ -65,8 +73,6 @@ int main(void)
 
 		Data &pi = arq.getData("this is pi");
 		pout(pi.get<double>());
-
-		arq.remove("this is pi");
 
 		arq.save();
 	}

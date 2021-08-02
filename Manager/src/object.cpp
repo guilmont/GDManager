@@ -93,33 +93,39 @@ namespace GDM
         return *this;
     }
 
+    GDM_API void Data::load(void)
+    {
+        if (buffer)
+            return;
+
+        uint64_t pos = offset;
+
+        // Getting compression method
+        Compression comp;
+        gdmFile->seekg(pos);
+        gdmFile->read(reinterpret_cast<char*>(&comp), sizeof(Compression));
+        pos += sizeof(Compression);
+
+        assert(comp == Compression::NONE); // TODO: Implement other types of compression
+
+        // Getting compressed number of bytes -> not important for now
+        uint64_t nBytes;
+        gdmFile->seekg(pos);
+        gdmFile->read(reinterpret_cast<char*>(&nBytes), sizeof(uint64_t));
+        pos += sizeof(uint64_t);
+
+        assert(nBytes == this->numBytes); // If not compression is used, theses values should be the same
+
+        // Importing data bytes
+        buffer = new uint8_t[numBytes];
+        gdmFile->seekg(pos);
+        gdmFile->read(reinterpret_cast<char*>(buffer), numBytes);
+    }
+
     uint8_t *Data::getRawBuffer(void) 
     {
         if (!buffer)
-        {
-            uint64_t pos = offset;
-
-            // Getting compression method
-            Compression comp;
-            gdmFile->seekg(pos);
-            gdmFile->read(reinterpret_cast<char *>(&comp), sizeof(Compression));
-            pos += sizeof(Compression);
-
-            assert(comp == Compression::NONE); // TODO: Implement other types of compression
-
-            // Getting compressed number of bytes -> not important for now
-            uint64_t nBytes;
-            gdmFile->seekg(pos);
-            gdmFile->read(reinterpret_cast<char *>(&nBytes), sizeof(uint64_t));
-            pos += sizeof(uint64_t);
-
-            assert(nBytes == this->numBytes); // If not compression is used, theses values should be the same
-
-            // Importing data bytes
-            buffer = new uint8_t[numBytes];
-            gdmFile->seekg(pos);
-            gdmFile->read(reinterpret_cast<char *>(buffer), numBytes);
-        }
+            load();
 
         return buffer;
     }
@@ -229,14 +235,54 @@ namespace GDM
         m_children.emplace(label, std::move(group));
     }
 
-    void Group::addData(Data *data)
+    void Group::copyData(Data *data)
     {
         const std::string &label = data->getLabel();
         assert(m_children.find(label) == m_children.end());
 
+        bool loaded = data->isLoaded();
+
+        Shape sp = data->getShape();
+        
+        Data* loc = new Data(label, data->getType());
+        loc->parent = this;
+
+        // Copying data
+        const uint8_t* ptr = data->getRawBuffer();
+        loc->buffer = new uint8_t[data->numBytes];
+        std::copy(ptr, ptr + data->numBytes, loc->buffer);
+
+        loc->shape = data->shape;
+        loc->numBytes = data->numBytes;
+        loc->offset = data->offset;
+        loc->gdmFile = data->gdmFile;
+
+        
+
+        // Copying descriptions
+        for (auto& [label, desc] : data->m_description)
+            loc->addDescription(label, desc);
+
+        if (!loaded)
+            data->release();
+
+        m_children.emplace(label, std::move(loc));
+    }
+
+
+    void Group::moveData(Data* data)
+    {
+        const std::string& label = data->getLabel();
+        assert(m_children.find(label) == m_children.end());
+
+        Group* other = data->parent;
         data->parent = this;
 
         m_children.emplace(label, std::move(data));
+
+        other->m_children[label] = nullptr;
+        other->m_children.erase(label);
+        // Now we need to remove from original group
     }
 
     const Group &Group::getGroup(const std::string &label) const { return reinterpret_cast<const Group &>(this->operator[](label)); }

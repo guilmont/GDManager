@@ -51,7 +51,8 @@ extern "C"
     GDM_API GDM::Object *getObject(GDM::Group *group, const char *label) { return &group->operator[](label); }
 
     GDM_API GDM::Group *addGroup(GDM::Group *group, const char *label) { return &group->addGroup(label); }
-    GDM_API void addDataObj(GDM::Group *group, GDM::Data *data) { group->addData(data); }
+    GDM_API void copyDataObj(GDM::Group* group, GDM::Data* data) { group->copyData(data); }
+    GDM_API void moveDataObj(GDM::Group *group, GDM::Data *data) { group->moveData(data); }
     GDM_API void addGroupObj(GDM::Group *group, GDM::Group *obj) { group->addGroup(obj); }
 
     GDM_API GDM::Data *addInt32(GDM::Group *obj, const char *label, const int32_t *ptr, uint32_t height, uint32_t width) { return &(obj->add<int32_t>(label, ptr, {height, width})); }

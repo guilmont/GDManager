@@ -46,19 +46,11 @@ install(EXPORT ${PROJECT_NAME}Config FILE ${PROJECT_NAME}Config.cmake DESTINATIO
 if (GDM_PYTHON_BINDING)
     project(PyGDManager)
 
-    add_library(${PROJECT_NAME} SHARED 
-        "src/core.h"
-        "src/object.h"  "src/object.cpp"
-        "src/file.h"    "src/file.cpp"
-        "python/pyWrapper.cpp"
-    )
-
-    if (GDM_PRECOMPILE_HEADERS)
-        target_precompile_headers(${PROJECT_NAME} PUBLIC "src/core.h")
-    endif()
+    add_library(${PROJECT_NAME} SHARED "python/pyWrapper.cpp")
 
     target_compile_definitions(${PROJECT_NAME} PRIVATE GDM_BUILD_DLL)
     target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/src)
+    target_link_libraries(${PROJECT_NAME} PUBLIC GDManager)
 
     install(TARGETS ${PROJECT_NAME}
         CONFIGURATIONS Release

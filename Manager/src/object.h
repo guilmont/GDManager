@@ -69,7 +69,7 @@ namespace GDM
         GDM_API const Shape& getShape(void) const { return shape; }
         GDM_API uint64_t getSizeBytes(void) const { return numBytes; }
         GDM_API bool isLoaded(void) const { return buffer != nullptr; }
-
+        GDM_API void load(void);
 
         // setting data
         template <typename TP>
@@ -135,7 +135,8 @@ namespace GDM
         GDM_API void addGroup(Group *group);
 
         // Adding data to group
-        GDM_API void addData(Data *data);
+        GDM_API void copyData(Data* data);  // copies data from a group into another, also works between files
+        GDM_API void moveData(Data *data);  // move data from one place to another
 
         template <typename TP>
         Data& add(const std::string &label, const TP *value, Shape shape);

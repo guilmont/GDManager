@@ -7,7 +7,7 @@ import numpy as np
 def createFile():
     print("###########################################################\ncreateFunction()\n")
 
-    arq = GDM.File("pytest.gdm", GDM.State.WRITE)
+    arq = GDM.File("pytest.gdm")
 
     arq.addData("this is pi", pi)
 
@@ -38,7 +38,7 @@ def createFile():
 def readFile():
     print("\n###########################################################\nreadFunction()")
 
-    arq = GDM.File("pytest.gdm", GDM.State.READ)  # READ is the default state
+    arq = GDM.File("pytest.gdm")  # READ is the default state
 
     ola = arq["hoxa/hic/resolution"]
     print(ola.getType())
@@ -53,6 +53,14 @@ def readFile():
 
     pi = arq.getData("this is pi")
     print(pi.get()[0, 0])
+
+    D = arq.getData("hoxa/cellLines/T1-T2/D")
+    arq.moveData(D)
+
+    A = arq.getData("hoxa/cellLines/T1-T2/A")
+    arq.copyData(A)
+
+    arq.save()
 
 
 if __name__ == "__main__":
