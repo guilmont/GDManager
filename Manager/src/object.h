@@ -66,7 +66,7 @@ namespace GDM
         GDM_API Data &operator=(Data &&mat) noexcept;
 
         // utilities
-        GDM_API const Shape& getShape(void) const { return shape; }
+        GDM_API const Shape &getShape(void) const { return shape; }
         GDM_API uint64_t getSizeBytes(void) const { return numBytes; }
         GDM_API bool isLoaded(void) const { return buffer != nullptr; }
         GDM_API void load(void);
@@ -135,14 +135,14 @@ namespace GDM
         GDM_API void addGroup(Group *group);
 
         // Adding data to group
-        GDM_API void copyData(Data* data);  // copies data from a group into another, also works between files
-        GDM_API void moveData(Data *data);  // move data from one place to another
+        GDM_API void copyData(Data *data); // copies data from a group into another, also works between files
+        GDM_API void moveData(Data *data); // move data from one place to another
 
         template <typename TP>
-        Data& add(const std::string &label, const TP *value, Shape shape);
+        Data &add(const std::string &label, const TP *value, Shape shape);
 
         template <typename TP>
-        Data& add(const std::string &label, TP value);
+        Data &add(const std::string &label, TP value);
 
         // remove elements
         GDM_API void remove(const std::string &label);
@@ -153,7 +153,6 @@ namespace GDM
 
     private:
         std::unordered_map<std::string, Object *> m_children;
-
     };
 
     ///////////////////////////////////////////////////////////////////////////
@@ -243,7 +242,7 @@ namespace GDM
     }
 
     template <typename TP>
-    const TP *Data::getArray(void) 
+    const TP *Data::getArray(void)
     {
         assert(GetType<TP>() == type);
         return reinterpret_cast<const TP *>(getRawBuffer());

@@ -103,7 +103,7 @@ namespace GDM
         // Getting compression method
         Compression comp;
         gdmFile->seekg(pos);
-        gdmFile->read(reinterpret_cast<char*>(&comp), sizeof(Compression));
+        gdmFile->read(reinterpret_cast<char *>(&comp), sizeof(Compression));
         pos += sizeof(Compression);
 
         assert(comp == Compression::NONE); // TODO: Implement other types of compression
@@ -111,7 +111,7 @@ namespace GDM
         // Getting compressed number of bytes -> not important for now
         uint64_t nBytes;
         gdmFile->seekg(pos);
-        gdmFile->read(reinterpret_cast<char*>(&nBytes), sizeof(uint64_t));
+        gdmFile->read(reinterpret_cast<char *>(&nBytes), sizeof(uint64_t));
         pos += sizeof(uint64_t);
 
         assert(nBytes == this->numBytes); // If not compression is used, theses values should be the same
@@ -119,10 +119,10 @@ namespace GDM
         // Importing data bytes
         buffer = new uint8_t[numBytes];
         gdmFile->seekg(pos);
-        gdmFile->read(reinterpret_cast<char*>(buffer), numBytes);
+        gdmFile->read(reinterpret_cast<char *>(buffer), numBytes);
     }
 
-    uint8_t *Data::getRawBuffer(void) 
+    uint8_t *Data::getRawBuffer(void)
     {
         if (!buffer)
             load();
@@ -243,12 +243,12 @@ namespace GDM
         bool loaded = data->isLoaded();
 
         Shape sp = data->getShape();
-        
-        Data* loc = new Data(label, data->getType());
+
+        Data *loc = new Data(label, data->getType());
         loc->parent = this;
 
         // Copying data
-        const uint8_t* ptr = data->getRawBuffer();
+        const uint8_t *ptr = data->getRawBuffer();
         loc->buffer = new uint8_t[data->numBytes];
         std::copy(ptr, ptr + data->numBytes, loc->buffer);
 
@@ -257,10 +257,8 @@ namespace GDM
         loc->offset = data->offset;
         loc->gdmFile = data->gdmFile;
 
-        
-
         // Copying descriptions
-        for (auto& [label, desc] : data->m_description)
+        for (auto &[label, desc] : data->m_description)
             loc->addDescription(label, desc);
 
         if (!loaded)
@@ -269,13 +267,12 @@ namespace GDM
         m_children.emplace(label, std::move(loc));
     }
 
-
-    void Group::moveData(Data* data)
+    void Group::moveData(Data *data)
     {
-        const std::string& label = data->getLabel();
+        const std::string &label = data->getLabel();
         assert(m_children.find(label) == m_children.end());
 
-        Group* other = data->parent;
+        Group *other = data->parent;
         data->parent = this;
 
         m_children.emplace(label, std::move(data));
@@ -299,21 +296,22 @@ namespace GDM
         m_children.erase(it);
     }
 
-    Object& Group::operator[](const std::string &label) {
+    Object &Group::operator[](const std::string &label)
+    {
         uint64_t
             posZero = 0,
             posEnd = label.find_first_of('/');
 
-        const Group* obj = this;
+        const Group *obj = this;
         while (posEnd != std::string::npos)
         {
-            const std::string& sub = label.substr(posZero, posEnd - posZero);
+            const std::string &sub = label.substr(posZero, posEnd - posZero);
             assert(sub.size() < MAX_LABEL_SIZE);
 
             auto it = obj->m_children.find(sub);
-            assert(it != obj->m_children.end());               // Does it exist?
+            assert(it != obj->m_children.end());          // Does it exist?
             assert(it->second->getType() == Type::GROUP); // Make sure it is a group
-            obj = reinterpret_cast<const Group*>(it->second);
+            obj = reinterpret_cast<const Group *>(it->second);
 
             posZero = posEnd + 1;
             posEnd = label.find('/', posZero);
@@ -325,21 +323,22 @@ namespace GDM
         return *(out->second);
     }
 
-    const Object& Group::operator[](const std::string& label) const { 
+    const Object &Group::operator[](const std::string &label) const
+    {
         uint64_t
             posZero = 0,
             posEnd = label.find_first_of('/');
 
-        const Group* obj = this;
+        const Group *obj = this;
         while (posEnd != std::string::npos)
         {
-            const std::string& sub = label.substr(posZero, posEnd - posZero);
+            const std::string &sub = label.substr(posZero, posEnd - posZero);
             assert(sub.size() < MAX_LABEL_SIZE);
 
             auto it = obj->m_children.find(sub);
             assert(it != m_children.end());               // Does it exist?
             assert(it->second->getType() == Type::GROUP); // Make sure it is a group
-            obj = reinterpret_cast<const Group*>(it->second);
+            obj = reinterpret_cast<const Group *>(it->second);
 
             posZero = posEnd + 1;
             posEnd = label.find('/', posZero);
