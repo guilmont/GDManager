@@ -34,8 +34,7 @@ class Object:
         lib.getObjectLabel.argtypes, lib.getObjectLabel.restype = [ctypes.c_void_p], ctypes.c_char_p
         lib.getObjectType.argtypes,  lib.getObjectType.restype = [ctypes.c_void_p], ctypes.c_uint32
         lib.getParent.argtypes,      lib.getParent.restype = [ctypes.c_void_p], ctypes.c_void_p
-        lib.addDescription.argtypes, lib.addDescription.restype = [
-            ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p], None
+        lib.addDescription.argtypes, lib.addDescription.restype = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p], None
         lib.getDescription.argtypes, lib.getDescription.restype = [ctypes.c_void_p, ctypes.c_char_p], ctypes.c_char_p
 
     def getLabel(self):

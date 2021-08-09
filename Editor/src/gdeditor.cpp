@@ -79,6 +79,8 @@ static void rewrite(const char *buf, uint64_t pos, uint8_t *ptr)
 
 GDEditor::GDEditor(void)
 {
+	fs::current_path(INSTALL_PATH);
+
 	GRender::pout("Welcome to my GDEditor!!");
 	initialize("GDEditor", 1200, 800);
 }
@@ -723,13 +725,4 @@ void GDEditor::openFile(const fs::path &inPath)
 	}
 }
 
-void GDEditor::saveFile(void)
-{
-	currentFile->close();
-	currentFile->save();
-
-	fs::path name = currentFile->getFilePath();
-	vFile.erase(name);
-
-	openFile(name);
-}
+void GDEditor::saveFile(void) { currentFile->save(); }

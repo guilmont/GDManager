@@ -309,8 +309,14 @@ namespace GDM
             assert(sub.size() < MAX_LABEL_SIZE);
 
             auto it = obj->m_children.find(sub);
-            assert(it != obj->m_children.end());          // Does it exist?
-            assert(it->second->getType() == Type::GROUP); // Make sure it is a group
+
+            if (it == obj->m_children.end())          // Does it exist?
+                throw "Object doesn't exist!! >> " + label;
+
+            if (it->second->getType() != Type::GROUP) // Make sure it is a group
+                throw "Object is not a group!! >> " + label;
+            
+            
             obj = reinterpret_cast<const Group *>(it->second);
 
             posZero = posEnd + 1;
@@ -336,8 +342,13 @@ namespace GDM
             assert(sub.size() < MAX_LABEL_SIZE);
 
             auto it = obj->m_children.find(sub);
-            assert(it != m_children.end());               // Does it exist?
-            assert(it->second->getType() == Type::GROUP); // Make sure it is a group
+            
+            if (it == obj->m_children.end())          // Does it exist?
+                throw "Object doesn't exist!! >> " + label;
+
+            if (it->second->getType() != Type::GROUP) // Make sure it is a group
+                throw "Object is not a group!! >> " + label;
+
             obj = reinterpret_cast<const Group *>(it->second);
 
             posZero = posEnd + 1;
