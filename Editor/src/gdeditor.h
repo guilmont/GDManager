@@ -24,6 +24,11 @@ private:
 
 	void detailWindow(void);
 
+	void plotHeatmap(void);
+	void plotLines(void);
+
+	void releaseMemory(GDM::Group* group);
+
 	void addObject(GDM::Group *group);
 
 
@@ -32,7 +37,10 @@ private:
 		view_imguidemo = false,
 		view_implotdemo = false;
 
+		GDM::Data* plotPointer = nullptr;
+		void (GDEditor::*plotWindow)(void) = nullptr;
 
+private:
 	std::string	close_file = "";
 
 	struct

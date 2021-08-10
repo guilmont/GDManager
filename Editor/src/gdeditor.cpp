@@ -74,6 +74,26 @@ static void rewrite(const char *buf, uint64_t pos, uint8_t *ptr)
 	std::copy(vv, vv + sizeof(TP), ptr + pos * sizeof(TP));
 }
 
+template <typename TP>
+static void lineFunction(GDM::Data* data, int selected, uint32_t id)
+{
+	GDM::Shape sp = data->getShape();
+	const TP* ptr = data->getArray<TP>();
+	uint32_t N = selected == 0 ? sp.width : sp.height;
+
+	std::vector<TP> vecX(N), vecY(N);
+
+	for (uint32_t k = 0; k < N; k++)
+	{
+		vecX[k] = TP(k);
+		vecY[k] = selected == 0 ? ptr[id * sp.width + k] : ptr[k * sp.width + id];
+	}
+
+	ImPlot::PlotLine("function",vecX.data(), vecY.data(), N);
+
+
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -82,7 +102,7 @@ GDEditor::GDEditor(void)
 	fs::current_path(INSTALL_PATH);
 
 	GRender::pout("Welcome to my GDEditor!!");
-	initialize("GDEditor", 1200, 800);
+	initialize("GDEditor", 1200, 800, "assets/GDEditor/layout.ini");
 }
 
 GDEditor::~GDEditor(void) {}
@@ -127,8 +147,6 @@ void GDEditor::onUserUpdate(float deltaTime)
 		dialog.createDialog(GDialog::OPEN, "Open file...", {"gdm", "gd"}, this, [](const std::string &path, void *ptr) -> void
 							{ reinterpret_cast<GDEditor *>(ptr)->openFile(path); });
 
-	if (ctrl & S)
-		saveFile();
 }
 
 void GDEditor::ImGuiLayer(void)
@@ -138,6 +156,9 @@ void GDEditor::ImGuiLayer(void)
 
 	if (view_implotdemo)
 		ImPlot::ShowDemoWindow(&view_implotdemo);
+
+	if (plotPointer)
+		(this->*plotWindow)();
 
 	if (addObj.view)
 		addObject(addObj.group);
@@ -162,11 +183,25 @@ void GDEditor::ImGuiMenuLayer(void)
 			dialog.createDialog(GDialog::OPEN, "Open file...", {"gdm", "gd"}, this, [](const std::string &path, void *ptr) -> void
 								{ reinterpret_cast<GDEditor *>(ptr)->openFile(path); });
 
-		if (ImGui::MenuItem("Save...", "Ctrl+S"))
+		if (ImGui::MenuItem("Save"))
 			saveFile();
 
 		if (ImGui::MenuItem("Exit"))
 			closeApp();
+
+		ImGui::EndMenu();
+	} 
+
+	if (ImGui::BeginMenu("Tools"))
+	{
+		if (ImGui::MenuItem("Show mailbox"))
+			mailbox.setActive();
+
+		if (ImGui::MenuItem("Release memory"))
+		{
+			for (auto &[name, arq] : vFile)
+				releaseMemory(&arq);
+		}
 
 		ImGui::EndMenu();
 	} // file-menu
@@ -232,8 +267,8 @@ void GDEditor::recursiveTreeLoop(GDM::Group *group, ImGuiTreeNodeFlags nodeFlags
 void GDEditor::treeViewWindow(void)
 {
 	const ImVec2 workpos = ImGui::GetMainViewport()->WorkPos;
-	ImGui::SetNextWindowPos({workpos.x + 20 * DPI_FACTOR, workpos.y + 40 * DPI_FACTOR}, ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize({400 * DPI_FACTOR, 700 * DPI_FACTOR}, ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos({workpos.x + 20, workpos.y + 40}, ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize({400, 700}, ImGuiCond_FirstUseEver);
 
 	ImGui::Begin("Tree view");
 
@@ -277,8 +312,11 @@ void GDEditor::treeViewWindow(void)
 		currentObj = currentFile;
 
 	ImGui::SameLine();
-	if (ImGui::Button("Close", {3.5f * ImGui::GetFontSize(), 0}))
+	if (ImGui::Button("Close", { 3.5f * ImGui::GetFontSize(), 0 }))
+	{
 		close_file = currentFile->getFilePath().string();
+		mailbox.createInfo("Closing file " + close_file);
+	}
 
 	if (openTree)
 	{
@@ -297,8 +335,8 @@ void GDEditor::treeViewWindow(void)
 void GDEditor::detailWindow(void)
 {
 	const ImVec2 workpos = ImGui::GetMainViewport()->WorkPos;
-	ImGui::SetNextWindowPos({workpos.x + 450 * DPI_FACTOR, workpos.y + 40 * DPI_FACTOR}, ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize({700 * DPI_FACTOR, 700 * DPI_FACTOR}, ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos({workpos.x + 450, workpos.y + 40}, ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize({700, 700}, ImGuiCond_FirstUseEver);
 
 	ImGui::Begin("Details");
 
@@ -382,7 +420,7 @@ void GDEditor::detailWindow(void)
 	{
 		// Creatign table to display description
 		ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY | ImGuiTableFlags_ScrollX | ImGuiTableFlags_Borders;
-		if (ImGui::BeginTable("descriptionTable", 3, flags, {0, std::min<float>(256 * DPI_FACTOR, 1.5f * (description.size() + 1) * ImGui::GetFontSize())}))
+		if (ImGui::BeginTable("descriptionTable", 3, flags, {0, std::min<float>(256, 1.5f * (description.size() + 1) * ImGui::GetFontSize())}))
 		{
 			// Header
 			ImGui::TableSetupColumn("Label");
@@ -468,7 +506,18 @@ void GDEditor::detailWindow(void)
 	if (dt->isLoaded())
 	{
 		ImGui::SameLine();
-		ImGui::Button("Plot");
+		if (ImGui::Button("Heatmap"))
+		{
+			plotPointer = dt;
+			plotWindow = &GDEditor::plotHeatmap;
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Line plot"))
+		{
+			plotPointer = dt;
+			plotWindow = &GDEditor::plotLines;
+		}
 	}
 
 	else
@@ -617,6 +666,169 @@ void GDEditor::detailWindow(void)
 	ImGui::End();
 }
 
+void GDEditor::plotHeatmap(void)
+{
+
+	const ImVec2 workpos = ImGui::GetMainViewport()->WorkPos;
+	ImGui::SetNextWindowPos({ workpos.x + 40, workpos.y + 40}, ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize({ 700, 700 }, ImGuiCond_FirstUseEver);
+
+	bool is_open = true; // So we can close this window from this function
+	ImGui::Begin("Plots", &is_open);
+
+	static float scale_min = 0;
+	static float scale_max = 1.0f;
+
+	static ImPlotColormap map = ImPlotColormap_Viridis;
+	if (ImPlot::ColormapButton(ImPlot::GetColormapName(map), ImVec2(225, 0), map)) {
+		map = (map + 1) % ImPlot::GetColormapCount();
+		ImPlot::BustColorCache("##Heatmap1");
+	}
+
+	ImGui::SameLine();
+	ImGui::LabelText("##Colormap Index", "%s", "Change Colormap");
+	ImGui::SetNextItemWidth(225);
+	ImGui::DragFloatRange2("Min / Max", &scale_min, &scale_max, 0.01f, -20, 20);
+	
+	GDM::Shape sp = plotPointer->getShape();
+	const uint8_t* ptr = plotPointer->getRawBuffer();
+
+	float ratio = float(sp.height) / float(sp.width);
+	float width = 0.8f * ImGui::GetContentRegionAvailWidth(),
+		height = width * ratio;
+
+	ImPlot::PushColormap(map);
+	if (ImPlot::BeginPlot("##Heatmap1", NULL, NULL, {width, height }, ImPlotFlags_NoLegend))
+	{
+		switch (plotPointer->getType())
+		{
+		case GDM::Type::INT32:
+			ImPlot::PlotHeatmap("heat", reinterpret_cast<const int32_t*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
+			break;
+
+		case GDM::Type::INT64:
+			ImPlot::PlotHeatmap("heat", reinterpret_cast<const int64_t*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
+			break;
+
+		case GDM::Type::UINT8:
+			ImPlot::PlotHeatmap("heat", reinterpret_cast<const uint8_t*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
+			break;
+
+		case GDM::Type::UINT16:
+			ImPlot::PlotHeatmap("heat", reinterpret_cast<const uint16_t*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
+			break;
+
+		case GDM::Type::UINT32:
+			ImPlot::PlotHeatmap("heat", reinterpret_cast<const uint32_t*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
+			break;
+
+		case GDM::Type::UINT64:
+			ImPlot::PlotHeatmap("heat", reinterpret_cast<const uint64_t*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
+			break;
+
+		case GDM::Type::FLOAT:
+			ImPlot::PlotHeatmap("heat", reinterpret_cast<const float*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
+			break;
+
+		case GDM::Type::DOUBLE:
+			ImPlot::PlotHeatmap("heat", reinterpret_cast<const double*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
+			break;
+
+		default:
+			throw "Type not recognized!!";
+			break;
+		}
+
+		ImPlot::EndPlot();
+	}
+	ImGui::SameLine();
+	ImPlot::ColormapScale("##HeatScale", scale_min, scale_max, { 0.15f * width, height });
+
+
+	ImGui::End();
+
+	if (!is_open)
+		plotPointer = nullptr;
+}
+
+void GDEditor::plotLines(void)
+{
+
+	const ImVec2 workpos = ImGui::GetMainViewport()->WorkPos;
+	ImGui::SetNextWindowPos({ workpos.x + 40, workpos.y + 40 }, ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize({ 700, 700 }, ImGuiCond_FirstUseEver);
+
+	GDM::Shape sp = plotPointer->getShape();
+
+	bool is_open = true; // So we can close this window from this function
+	ImGui::Begin("Plots", &is_open);
+
+	static int selected = 0;
+	ImGui::RadioButton("Rows", &selected, 0); ImGui::SameLine();
+	ImGui::RadioButton("Columns", &selected, 1); 
+
+	static int id = 0;
+	ImGui::DragInt("ID", &id, 1.0f, 0, selected == 0 ? sp.height-1 : sp.width-1);
+	
+	const char* labx = "Index";
+		char laby[64] = { 0 };
+	sprintf(laby, "%s %d", (selected == 0 ? "Row" : "Column"), id);
+	
+
+	float width = 0.95f * ImGui::GetContentRegionAvailWidth(),
+		height = 0.7f * width;
+
+	if (ImPlot::BeginPlot("Line Plot", labx, laby, { width, height }, ImPlotFlags_NoLegend)) {
+
+		ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
+		switch (plotPointer->getType())
+		{
+		case GDM::Type::INT32:
+			lineFunction<int32_t>(plotPointer, selected, id);
+			break;
+
+		case GDM::Type::INT64:
+			lineFunction<int64_t>(plotPointer, selected, id);
+			break;
+			
+		case GDM::Type::UINT8:
+			lineFunction<uint8_t>(plotPointer, selected, id);
+			break;
+			
+		case GDM::Type::UINT16:
+			lineFunction<uint16_t>(plotPointer, selected, id);
+			break;
+			
+		case GDM::Type::UINT32:
+			lineFunction<uint32_t>(plotPointer, selected, id);
+			break;
+			
+		case GDM::Type::UINT64:
+			lineFunction<uint64_t>(plotPointer, selected, id);
+			break;
+			
+		case GDM::Type::FLOAT:
+			lineFunction<float>(plotPointer, selected, id);
+			break;
+			
+		case GDM::Type::DOUBLE:
+			lineFunction<double>(plotPointer, selected, id);
+			break;
+			
+		default:
+			throw "Type not recognized!!";
+			break;
+		}
+		
+		ImPlot::EndPlot();
+	}
+
+	ImGui::End();
+
+	if (!is_open)
+		plotPointer = nullptr;
+}
+
 void GDEditor::addObject(GDM::Group *group)
 {
 	ImGui::Begin("Add object", &addObj.view);
@@ -710,6 +922,24 @@ void GDEditor::addObject(GDM::Group *group)
 	ImGui::End();
 }
 
+void GDEditor::releaseMemory(GDM::Group* group)
+{
+	for (auto& [label, obj] : group->children())
+	{
+		if (obj->getType() == GDM::Type::GROUP)
+		{
+			releaseMemory(reinterpret_cast<GDM::Group*>(obj));
+		}
+		else
+		{
+			GDM::Data* ptr = reinterpret_cast<GDM::Data*>(obj);
+			if (ptr->isLoaded())
+				ptr->release();
+		}
+
+	} 
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -717,12 +947,20 @@ void GDEditor::openFile(const fs::path &inPath)
 {
 
 	if (vFile.find(inPath) != vFile.end())
-		GRender::pout("WARNING: File already openned!!");
+		mailbox.createWarn("File already openned!!");
 	else
 	{
+		mailbox.createInfo("Openning file: " + inPath.string());
 		vFile.emplace(inPath, inPath);
 		currentFile = &vFile[inPath];
 	}
 }
 
-void GDEditor::saveFile(void) { currentFile->save(); }
+void GDEditor::saveFile(void)
+{ 
+	if (currentFile)
+	{
+		mailbox.createInfo("Saving file to " + currentFile->getFilePath().string());
+		currentFile->save();
+	}
+}

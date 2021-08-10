@@ -132,10 +132,7 @@ namespace GDM
 
     void Data::release(void)
     {
-        assert(numBytes > sizeof(getNumBytes(type))); // We can only release data if if contains more than 8 bytes
-        assert(buffer != nullptr);                    // why not to check that too?
-
-        if (buffer)
+        if (buffer && (numBytes > sizeof(getNumBytes(type)))) // We can only release data if if contains more than 8 bytes
         {
             delete[] buffer;
             buffer = nullptr;
