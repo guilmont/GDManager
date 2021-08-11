@@ -703,27 +703,27 @@ void GDEditor::plotHeatmap(void)
 		switch (plotPointer->getType())
 		{
 		case GDM::Type::INT32:
-			ImPlot::PlotHeatmap("heat", reinterpret_cast<const int32_t*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
+			ImPlot::PlotHeatmap("heat", reinterpret_cast<const ImS32*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
 			break;
 
 		case GDM::Type::INT64:
-			ImPlot::PlotHeatmap("heat", reinterpret_cast<const int64_t*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
+			ImPlot::PlotHeatmap("heat", reinterpret_cast<const ImS64*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
 			break;
 
 		case GDM::Type::UINT8:
-			ImPlot::PlotHeatmap("heat", reinterpret_cast<const uint8_t*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
+			ImPlot::PlotHeatmap("heat", reinterpret_cast<const ImU8*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
 			break;
 
 		case GDM::Type::UINT16:
-			ImPlot::PlotHeatmap("heat", reinterpret_cast<const uint16_t*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
+			ImPlot::PlotHeatmap("heat", reinterpret_cast<const ImU16*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
 			break;
 
 		case GDM::Type::UINT32:
-			ImPlot::PlotHeatmap("heat", reinterpret_cast<const uint32_t*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
+			ImPlot::PlotHeatmap("heat", reinterpret_cast<const ImU32*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
 			break;
 
 		case GDM::Type::UINT64:
-			ImPlot::PlotHeatmap("heat", reinterpret_cast<const uint64_t*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
+			ImPlot::PlotHeatmap("heat", reinterpret_cast<const ImU64*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
 			break;
 
 		case GDM::Type::FLOAT:
@@ -784,27 +784,27 @@ void GDEditor::plotLines(void)
 		switch (plotPointer->getType())
 		{
 		case GDM::Type::INT32:
-			lineFunction<int32_t>(plotPointer, selected, id);
+			lineFunction<ImS32>(plotPointer, selected, id);
 			break;
 
 		case GDM::Type::INT64:
-			lineFunction<int64_t>(plotPointer, selected, id);
+			lineFunction<ImS64>(plotPointer, selected, id);
 			break;
 			
 		case GDM::Type::UINT8:
-			lineFunction<uint8_t>(plotPointer, selected, id);
+			lineFunction<ImU8>(plotPointer, selected, id);
 			break;
 			
 		case GDM::Type::UINT16:
-			lineFunction<uint16_t>(plotPointer, selected, id);
+			lineFunction<ImU16>(plotPointer, selected, id);
 			break;
 			
 		case GDM::Type::UINT32:
-			lineFunction<uint32_t>(plotPointer, selected, id);
+			lineFunction<ImU32>(plotPointer, selected, id);
 			break;
 			
 		case GDM::Type::UINT64:
-			lineFunction<uint64_t>(plotPointer, selected, id);
+			lineFunction<ImU64>(plotPointer, selected, id);
 			break;
 			
 		case GDM::Type::FLOAT:
