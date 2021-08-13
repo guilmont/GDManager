@@ -326,16 +326,16 @@ class Group(Object):
 
 
 class File(Group):
-    def __init__(self, filename, state=State.READ):
+    def __init__(self, filename):
         Group.__init__(self, "root")
 
-        lib.newFile.argtypes, lib.newFile.restype = [ctypes.c_char_p, ctypes.c_uint32], ctypes.c_void_p
+        lib.newFile.argtypes, lib.newFile.restype = [ctypes.c_char_p], ctypes.c_void_p
         lib.saveFile.argtypes, lib.saveFile.restype = [ctypes.c_void_p], None
         lib.closeFile.argtypes, lib.closeFile.restype = [ctypes.c_void_p], None
 
         lib.getFilePath.argtypes, lib.getFilePath.restype = [ctypes.c_void_p], ctypes.c_char_p
 
-        self.obj = lib.newFile(filename.encode('ascii'), state)
+        self.obj = lib.newFile(filename.encode('ascii'))
 
     def getfilePath(self):
         return lib.getFilePath(self.obj).decode('ascii')

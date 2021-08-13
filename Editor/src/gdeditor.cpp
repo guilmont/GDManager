@@ -505,18 +505,22 @@ void GDEditor::detailWindow(void)
 
 	if (dt->isLoaded())
 	{
-		ImGui::SameLine();
-		if (ImGui::Button("Heatmap"))
+		if (dt->getSizeBytes() > sizeof(uint64_t))
 		{
-			plotPointer = dt;
-			plotWindow = &GDEditor::plotHeatmap;
-		}
+			ImGui::SameLine();
+			if (ImGui::Button("Heatmap"))
+			{
+				plotPointer = dt;
+				plotWindow = &GDEditor::plotHeatmap;
+			}
 
-		ImGui::SameLine();
-		if (ImGui::Button("Line plot"))
-		{
-			plotPointer = dt;
-			plotWindow = &GDEditor::plotLines;
+			ImGui::SameLine();
+			if (ImGui::Button("Line plot"))
+			{
+				plotPointer = dt;
+				plotWindow = &GDEditor::plotLines;
+			}
+			
 		}
 	}
 
@@ -597,25 +601,25 @@ void GDEditor::detailWindow(void)
 					sprintf(buf, "%d", reinterpret_cast<int32_t *>(ptr)[ct]);
 					break;
 				case GDM::Type::INT64:
-					sprintf(buf, "%I64d", reinterpret_cast<int64_t *>(ptr)[ct]);
+					sprintf(buf, "%jd", reinterpret_cast<int64_t *>(ptr)[ct]);
 					break;
 				case GDM::Type::UINT8:
-					sprintf(buf, "%d", reinterpret_cast<uint8_t *>(ptr)[ct]);
+					sprintf(buf, "%u", reinterpret_cast<uint8_t *>(ptr)[ct]);
 					break;
 				case GDM::Type::UINT16:
-					sprintf(buf, "%d", reinterpret_cast<uint16_t *>(ptr)[ct]);
+					sprintf(buf, "%u", reinterpret_cast<uint16_t *>(ptr)[ct]);
 					break;
 				case GDM::Type::UINT32:
-					sprintf(buf, "%d", reinterpret_cast<uint32_t *>(ptr)[ct]);
+					sprintf(buf, "%u", reinterpret_cast<uint32_t *>(ptr)[ct]);
 					break;
 				case GDM::Type::UINT64:
-					sprintf(buf, "%I64d", reinterpret_cast<uint64_t *>(ptr)[ct]);
+					sprintf(buf, "%ju", reinterpret_cast<uint64_t *>(ptr)[ct]);
 					break;
 				case GDM::Type::FLOAT:
 					sprintf(buf, "%.6f", reinterpret_cast<float *>(ptr)[ct]);
 					break;
 				case GDM::Type::DOUBLE:
-					sprintf(buf, "%lf", reinterpret_cast<double *>(ptr)[ct]);
+					sprintf(buf, "%.6lf", reinterpret_cast<double *>(ptr)[ct]);
 					break;
 				}
 
@@ -744,7 +748,6 @@ void GDEditor::plotHeatmap(void)
 	ImGui::SameLine();
 	ImPlot::ColormapScale("##HeatScale", scale_min, scale_max, { 0.15f * width, height });
 
-
 	ImGui::End();
 
 	if (!is_open)
@@ -763,6 +766,7 @@ void GDEditor::plotLines(void)
 	bool is_open = true; // So we can close this window from this function
 	ImGui::Begin("Plots", &is_open);
 
+
 	static int selected = 0;
 	ImGui::RadioButton("Rows", &selected, 0); ImGui::SameLine();
 	ImGui::RadioButton("Columns", &selected, 1); 
@@ -778,7 +782,7 @@ void GDEditor::plotLines(void)
 	float width = 0.95f * ImGui::GetContentRegionAvailWidth(),
 		height = 0.7f * width;
 
-	if (ImPlot::BeginPlot("Line Plot", labx, laby, { width, height }, ImPlotFlags_NoLegend)) {
+	if (ImPlot::BeginPlot(plotPointer->getLabel().c_str(), labx, laby, { width, height }, ImPlotFlags_NoLegend)) {
 
 		ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
 		switch (plotPointer->getType())
@@ -823,6 +827,7 @@ void GDEditor::plotLines(void)
 		ImPlot::EndPlot();
 	}
 
+	ImGui::PopID();
 	ImGui::End();
 
 	if (!is_open)

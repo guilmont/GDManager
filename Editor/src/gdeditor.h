@@ -12,23 +12,14 @@ public:
 	void ImGuiMenuLayer(void) override;
 
 	void openFile(const fs::path& inPath); // So we can open files from the command line
-	
-
-private:
 	void saveFile(void);
 
 
 private:
 	void recursiveTreeLoop(GDM::Group *group, ImGuiTreeNodeFlags nodeFlags);
 	void treeViewWindow(void);
-
 	void detailWindow(void);
-
-	void plotHeatmap(void);
-	void plotLines(void);
-
 	void releaseMemory(GDM::Group* group);
-
 	void addObject(GDM::Group *group);
 
 
@@ -37,8 +28,12 @@ private:
 		view_imguidemo = false,
 		view_implotdemo = false;
 
-		GDM::Data* plotPointer = nullptr;
-		void (GDEditor::*plotWindow)(void) = nullptr;
+private:
+	GDM::Data* plotPointer = nullptr;
+	void (GDEditor::* plotWindow)(void) = nullptr;
+
+	void plotHeatmap(void);
+	void plotLines(void);
 
 private:
 	std::string	close_file = "";
