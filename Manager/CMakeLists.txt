@@ -16,7 +16,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE GDM_BUILD_DLL)
 
 target_include_directories(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src> 
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME}>
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
@@ -28,7 +28,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 ### Installation ##########################################
 
 file(GLOB INC_FILES "src/*.h")
-install(FILES ${INC_FILES} DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
+install(FILES ${INC_FILES} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME})
 
 install(TARGETS ${PROJECT_NAME}
     EXPORT ${PROJECT_NAME}Config
@@ -37,7 +37,7 @@ install(TARGETS ${PROJECT_NAME}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
 
-install(EXPORT ${PROJECT_NAME}Config FILE ${PROJECT_NAME}Config.cmake DESTINATION ${CMAKE_INSTALL_PREFIX}/share/cmake)
+install(EXPORT ${PROJECT_NAME}Config FILE ${PROJECT_NAME}Config.cmake DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/cmake)
 
 
 #############################
@@ -58,7 +58,7 @@ if (GDM_PYTHON_BINDING)
             RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/share/python_packages
     )
 
-    install(FILES "python/GDManager.py" CONFIGURATIONS Release DESTINATION ${CMAKE_INSTALL_PREFIX}/share/python_packages)
+    install(FILES "python/GDManager.py" CONFIGURATIONS Release DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/python_packages)
 
 endif()
 

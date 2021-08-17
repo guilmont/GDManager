@@ -314,6 +314,8 @@ void GDEditor::treeViewWindow(void)
 	ImGui::SameLine();
 	if (ImGui::Button("Close", { 3.5f * ImGui::GetFontSize(), 0 }))
 	{
+		plotPointer = nullptr;
+		plotWindow = nullptr;
 		close_file = currentFile->getFilePath().string();
 		mailbox.createInfo("Closing file " + close_file);
 	}
