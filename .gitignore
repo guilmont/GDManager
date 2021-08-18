@@ -1,6 +1,7 @@
 .vs
 .vscode
 build
-linux
+bin
 __pycache__
 *.gdm
+/assets

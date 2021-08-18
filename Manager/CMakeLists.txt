@@ -54,8 +54,8 @@ if (GDM_PYTHON_BINDING)
 
     install(TARGETS ${PROJECT_NAME}
         CONFIGURATIONS Release
-            LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/share/python_packages
-            RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/share/python_packages
+            LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/python_packages
+            RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/python_packages
     )
 
     install(FILES "python/GDManager.py" CONFIGURATIONS Release DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/python_packages)
