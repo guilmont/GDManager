@@ -51,6 +51,8 @@ def readFile():
     loc = arq["hoxa/cellLines/T1-T2/locations"].get()
     print(loc)
 
+    print(arq["hoxa/cellLines/T1-T2/locations"].getShape())
+
     pi = arq.getData("this is pi")
     print(pi.get()[0, 0])
 
