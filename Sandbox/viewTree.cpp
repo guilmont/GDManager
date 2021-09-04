@@ -22,28 +22,28 @@ static void printGroup(std::string step, GDM::Group &obj)
 			switch (data->getType())
 			{
 			case GDM::Type::INT32:
-				printf("DATA (INT32 {%d,%d}) >> ", shape.height, shape.width);
+				printf("DATA (INT32 {%lld,%lld}) >> ", shape.height, shape.width);
 				break;
 			case GDM::Type::INT64:
-				printf("DATA (INT64 {%d,%d}) >> ", shape.height, shape.width);
+				printf("DATA (INT64 {%lld,%lld}) >> ", shape.height, shape.width);
 				break;
 			case GDM::Type::UINT8:
-				printf("DATA (UINT8 {%d,%d}) >> ", shape.height, shape.width);
+				printf("DATA (UINT8 {%lld,%lld}) >> ", shape.height, shape.width);
 				break;
 			case GDM::Type::UINT16:
-				printf("DATA (UINT16 {%d,%d}) >> ", shape.height, shape.width);
+				printf("DATA (UINT16 {%lld,%lld}) >> ", shape.height, shape.width);
 				break;
 			case GDM::Type::UINT32:
-				printf("DATA (UINT32 {%d,%d}) >> ", shape.height, shape.width);
+				printf("DATA (UINT32 {%lld,%lld}) >> ", shape.height, shape.width);
 				break;
 			case GDM::Type::UINT64:
-				printf("DATA (UINT64 {%d,%d}) >> ", shape.height, shape.width);
+				printf("DATA (UINT64 {%lld,%lld}) >> ", shape.height, shape.width);
 				break;
 			case GDM::Type::FLOAT:
-				printf("DATA (FLOAT {%d,%d}) >> ", shape.height, shape.width);
+				printf("DATA (FLOAT {%lld,%lld}) >> ", shape.height, shape.width);
 				break;
 			case GDM::Type::DOUBLE:
-				printf("DATA (DOUBLE {%d,%d}) >> ", shape.height, shape.width);
+				printf("DATA (DOUBLE {%lld,%lld}) >> ", shape.height, shape.width);
 				break;
 			default:
 				printf("UNKNOWN >> UNKNOWN\n");

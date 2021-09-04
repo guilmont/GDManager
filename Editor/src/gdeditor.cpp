@@ -66,6 +66,12 @@ static GDM::Type label2Type(const std::string &label)
 	}
 }
 
+
+static bool SliderU64(const char* label, uint64_t* val, uint64_t low, uint64_t high)
+{
+	return ImGui::SliderScalar(label, ImGuiDataType_U64, val, &low, &high);
+}
+
 template <typename TP>
 static void rewrite(const char *buf, uint64_t pos, uint8_t *ptr)
 {
@@ -75,21 +81,21 @@ static void rewrite(const char *buf, uint64_t pos, uint8_t *ptr)
 }
 
 template <typename TP>
-static void lineFunction(GDM::Data* data, int selected, uint32_t id)
+static void lineFunction(GDM::Data* data, int selected, uint64_t id)
 {
 	GDM::Shape sp = data->getShape();
 	const TP* ptr = data->getArray<TP>();
-	uint32_t N = selected == 0 ? sp.width : sp.height;
+	uint64_t N = selected == 0 ? sp.width : sp.height;
 
 	std::vector<TP> vecX(N), vecY(N);
 
-	for (uint32_t k = 0; k < N; k++)
+	for (uint64_t k = 0; k < N; k++)
 	{
 		vecX[k] = TP(k);
 		vecY[k] = selected == 0 ? ptr[id * sp.width + k] : ptr[k * sp.width + id];
 	}
 
-	ImPlot::PlotLine("function",vecX.data(), vecY.data(), N);
+	ImPlot::PlotLine("function",vecX.data(), vecY.data(), int(N));
 
 
 }
@@ -140,12 +146,10 @@ void GDEditor::onUserUpdate(float deltaTime)
 		view_implotdemo = true;
 
 	if (ctrl & N)
-		dialog.createDialog(GDialog::SAVE, "New file...", {"gdm", "gd"}, this, [](const std::string &path, void *ptr) -> void
-							{ reinterpret_cast<GDEditor *>(ptr)->openFile(path); });
+		dialog.createDialog(GDialog::SAVE, "New file...", {"gdm", "gd"}, this, [](const fs::path &path, void *ptr) -> void { reinterpret_cast<GDEditor *>(ptr)->openFile(path); });
 
 	if (ctrl & O)
-		dialog.createDialog(GDialog::OPEN, "Open file...", {"gdm", "gd"}, this, [](const std::string &path, void *ptr) -> void
-							{ reinterpret_cast<GDEditor *>(ptr)->openFile(path); });
+		dialog.createDialog(GDialog::OPEN, "Open file...", {"gdm", "gd"}, this, [](const fs::path &path, void *ptr) -> void { reinterpret_cast<GDEditor *>(ptr)->openFile(path); });
 
 }
 
@@ -176,12 +180,10 @@ void GDEditor::ImGuiMenuLayer(void)
 	if (ImGui::BeginMenu("File"))
 	{
 		if (ImGui::MenuItem("New file...", "Ctrl+N"))
-			dialog.createDialog(GDialog::SAVE, "New file...", {"gdm", "gd"}, this, [](const std::string &path, void *ptr) -> void
-								{ reinterpret_cast<GDEditor *>(ptr)->openFile(path); });
+			dialog.createDialog(GDialog::SAVE, "New file...", {"gdm", "gd"}, this, [](const fs::path &path, void *ptr) -> void { reinterpret_cast<GDEditor *>(ptr)->openFile(path); });
 
 		if (ImGui::MenuItem("Open...", "Ctrl+O"))
-			dialog.createDialog(GDialog::OPEN, "Open file...", {"gdm", "gd"}, this, [](const std::string &path, void *ptr) -> void
-								{ reinterpret_cast<GDEditor *>(ptr)->openFile(path); });
+			dialog.createDialog(GDialog::OPEN, "Open file...", {"gdm", "gd"}, this, [](const fs::path &path, void *ptr) -> void { reinterpret_cast<GDEditor *>(ptr)->openFile(path); });
 
 		if (ImGui::MenuItem("Save"))
 			saveFile();
@@ -536,18 +538,18 @@ void GDEditor::detailWindow(void)
 	GDM::Type type = dt->getType();
 	uint8_t *ptr = dt->getRawBuffer(); // This is the raw buffer pointer
 
-	uint32_t maxRows = std::min<uint32_t>(32, shape.height);
-	uint32_t maxCols = std::min<uint32_t>(32, shape.width);
+	uint64_t maxRows = std::min<uint64_t>(32, shape.height);
+	uint64_t maxCols = std::min<uint64_t>(32, shape.width);
 
-	static uint32_t rowZero = 0, rowTop = maxRows;
-	static uint32_t colZero = 0, colTop = maxCols;
+	static uint64_t rowZero = 0, rowTop = maxRows;
+	static uint64_t colZero = 0, colTop = maxCols;
 
 	if (maxRows < shape.height)
 	{
-		int val = static_cast<int32_t>(rowZero);
-		ImGui::SliderInt("Rows", &val, 0, shape.height - 32);
+		int64_t val = static_cast<int64_t>(rowZero);
+		SliderU64("Rows", &rowZero, 0, shape.height - 32);
 
-		rowZero = std::min(static_cast<uint32_t>(val), shape.height);
+		rowZero = std::min(rowZero, shape.height);
 		rowTop = std::min(rowZero + 32, shape.height);
 	}
 	else
@@ -558,10 +560,9 @@ void GDEditor::detailWindow(void)
 
 	if (maxCols < shape.width)
 	{
-		int val = static_cast<int32_t>(colZero);
-		ImGui::SliderInt("Cols", &val, 0, shape.width - 32);
+		SliderU64("Cols", &colZero, 0, shape.width - 32);
 
-		colZero = std::min(static_cast<uint32_t>(val), shape.width);
+		colZero = std::min(colZero, shape.width);
 		colTop = std::min(colZero + 32, shape.width);
 	}
 	else
@@ -571,29 +572,29 @@ void GDEditor::detailWindow(void)
 	}
 
 	ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY | ImGuiTableFlags_ScrollX | ImGuiTableFlags_Borders | ImGuiTableFlags_NoHostExtendX | ImGuiTableFlags_NoHostExtendY;
-	if (ImGui::BeginTable("dataTable", maxCols + 1, flags))
+	if (ImGui::BeginTable("dataTable", int(maxCols + 1), flags))
 	{
 		ImGui::TableNextRow();
 
-		for (uint32_t column = 1; column <= maxCols; column++)
+		for (uint64_t column = 1; column <= maxCols; column++)
 		{
-			ImGui::TableSetColumnIndex(column);
+			ImGui::TableSetColumnIndex(int(column));
 			fonts.text(std::to_string(colZero + column - 1).c_str(), "bold");
 		}
 
 		// Main body
-		for (uint32_t row = rowZero; row < rowTop; row++)
+		for (uint64_t row = rowZero; row < rowTop; row++)
 		{
 			ImGui::TableNextRow();
 
 			ImGui::TableSetColumnIndex(0);
 			fonts.text(std::to_string(row).c_str(), "bold");
 
-			for (uint32_t column = colZero; column < colTop; column++)
+			for (uint64_t column = colZero; column < colTop; column++)
 			{
-				uint32_t ct = row * shape.width + column;
+				uint64_t ct = row * shape.width + column;
 
-				ImGui::TableSetColumnIndex(column + 1 - colZero);
+				ImGui::TableSetColumnIndex(int(column + 1 - colZero));
 
 				char buf[64] = {0x00};
 
@@ -706,38 +707,42 @@ void GDEditor::plotHeatmap(void)
 	ImPlot::PushColormap(map);
 	if (ImPlot::BeginPlot("##Heatmap1", NULL, NULL, {width, height }, ImPlotFlags_NoLegend))
 	{
+		int 
+			width = static_cast<int>(sp.width),
+			height = static_cast<int>(sp.height);
+
 		switch (plotPointer->getType())
 		{
 		case GDM::Type::INT32:
-			ImPlot::PlotHeatmap("heat", reinterpret_cast<const ImS32*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
+			ImPlot::PlotHeatmap("heat", reinterpret_cast<const ImS32*>(ptr), height, width, scale_min, scale_max, NULL);
 			break;
 
 		case GDM::Type::INT64:
-			ImPlot::PlotHeatmap("heat", reinterpret_cast<const ImS64*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
+			ImPlot::PlotHeatmap("heat", reinterpret_cast<const ImS64*>(ptr), height, width, scale_min, scale_max, NULL);
 			break;
 
 		case GDM::Type::UINT8:
-			ImPlot::PlotHeatmap("heat", reinterpret_cast<const ImU8*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
+			ImPlot::PlotHeatmap("heat", reinterpret_cast<const ImU8*>(ptr), height, width, scale_min, scale_max, NULL);
 			break;
 
 		case GDM::Type::UINT16:
-			ImPlot::PlotHeatmap("heat", reinterpret_cast<const ImU16*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
+			ImPlot::PlotHeatmap("heat", reinterpret_cast<const ImU16*>(ptr), height, width, scale_min, scale_max, NULL);
 			break;
 
 		case GDM::Type::UINT32:
-			ImPlot::PlotHeatmap("heat", reinterpret_cast<const ImU32*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
+			ImPlot::PlotHeatmap("heat", reinterpret_cast<const ImU32*>(ptr), height, width, scale_min, scale_max, NULL);
 			break;
 
 		case GDM::Type::UINT64:
-			ImPlot::PlotHeatmap("heat", reinterpret_cast<const ImU64*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
+			ImPlot::PlotHeatmap("heat", reinterpret_cast<const ImU64*>(ptr), height, width, scale_min, scale_max, NULL);
 			break;
 
 		case GDM::Type::FLOAT:
-			ImPlot::PlotHeatmap("heat", reinterpret_cast<const float*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
+			ImPlot::PlotHeatmap("heat", reinterpret_cast<const float*>(ptr), height, width, scale_min, scale_max, NULL);
 			break;
 
 		case GDM::Type::DOUBLE:
-			ImPlot::PlotHeatmap("heat", reinterpret_cast<const double*>(ptr), sp.height, sp.width, scale_min, scale_max, NULL);
+			ImPlot::PlotHeatmap("heat", reinterpret_cast<const double*>(ptr), height, width, scale_min, scale_max, NULL);
 			break;
 
 		default:
@@ -774,14 +779,16 @@ void GDEditor::plotLines(void)
 	ImGui::RadioButton("Columns", &selected, 1); 
 
 	static int id = 0;
-	ImGui::DragInt("ID", &id, 1.0f, 0, selected == 0 ? sp.height-1 : sp.width-1);
+	ImGui::DragInt("ID", &id, 1.0f, 0, selected == 0 ? int(sp.height)-1 : int(sp.width)-1);
 	
 	const char* labx = "Index";
-		char laby[64] = { 0 };
+
+	char laby[64] = { 0 };
 	sprintf(laby, "%s %d", (selected == 0 ? "Row" : "Column"), id);
 	
 
-	float width = 0.95f * ImGui::GetContentRegionAvailWidth(),
+	float
+		width = 0.95f * ImGui::GetContentRegionAvailWidth(),
 		height = 0.7f * width;
 
 	if (ImPlot::BeginPlot(plotPointer->getLabel().c_str(), labx, laby, { width, height }, ImPlotFlags_NoLegend)) {

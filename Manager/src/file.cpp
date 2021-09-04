@@ -72,7 +72,7 @@ namespace GDM
 		for (auto &desc : vDesc)
 		{
 			vHeader[desc.headerID].descriptionAddress = headerOffset;
-			headerOffset += desc.buffer.size() + sizeof(uint32_t); // buffer is in bytes
+			headerOffset += desc.buffer.size() + sizeof(uint64_t); // buffer is in bytes
 		}
 
 		// Compressing data and inserting offset into header
@@ -104,8 +104,8 @@ namespace GDM
 
 		for (const HelperDescription &desc : vDesc)
 		{
-			uint32_t sz = static_cast<uint32_t>(desc.buffer.size());
-			output.write(reinterpret_cast<const char *>(&sz), sizeof(uint32_t));
+			uint64_t sz = desc.buffer.size();
+			output.write(reinterpret_cast<const char *>(&sz), sizeof(uint64_t));
 			output.write(desc.buffer.data(), desc.buffer.size() * sizeof(char));
 		}
 
@@ -242,13 +242,13 @@ namespace GDM
 	void File::loadDescription(Object &obj, uint64_t address)
 	{
 		// First we get the total number of bytes describing this object
-		uint32_t descSize;
+		uint64_t descSize;
 		gdmFile.seekg(address);
-		gdmFile.read(reinterpret_cast<char *>(&descSize), sizeof(uint32_t));
+		gdmFile.read(reinterpret_cast<char *>(&descSize), sizeof(uint64_t));
 
 		char *data = new char[descSize];
 
-		gdmFile.seekg(address + sizeof(uint32_t));
+		gdmFile.seekg(address + sizeof(uint64_t));
 		gdmFile.read(data, descSize);
 
 		// Now we load all labels and descriptions
@@ -266,7 +266,7 @@ namespace GDM
 		delete[] data;
 	}
 
-	void File::loadGroup(Group *obj, uint32_t numChildren, uint64_t dataAddress, uint64_t descAddress)
+	void File::loadGroup(Group *obj, uint64_t numChildren, uint64_t dataAddress, uint64_t descAddress)
 	{
 		if (descAddress != NO_DESCRIPTION)
 			loadDescription(*obj, descAddress);
@@ -274,7 +274,7 @@ namespace GDM
 		offset = dataAddress;
 		char buffer[sizeof(Header)] = {0x00};
 
-		for (uint32_t k = 0; k < numChildren; k++)
+		for (uint64_t k = 0; k < numChildren; k++)
 		{
 			gdmFile.seekg(offset);
 			gdmFile.read(buffer, sizeof(Header));
@@ -295,7 +295,7 @@ namespace GDM
 				Data *dt = new Data(loc.label, loc.type);
 				dt->parent = obj;
 				dt->shape = loc.shape;
-				dt->numBytes = uint64_t(dt->shape.width) * uint64_t(dt->shape.height) * getNumBytes(dt->type);
+				dt->numBytes = dt->shape.width * dt->shape.height * getNumBytes(dt->type);
 
 				if (dt->numBytes <= sizeof(uint64_t))
 				{

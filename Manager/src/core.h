@@ -36,8 +36,8 @@ namespace GDM
     inline constexpr uint32_t MAX_LABEL_SIZE = 32;                 // maximum number of characters allowed for a label
     inline constexpr uint64_t NO_DESCRIPTION = 0xffffffffffffffff; // addresss used when no description is provided to object
 
-    inline const char *GDM_SIGNATURE = "GDManager (ver 1) by GM Oliveira";
-
+    inline const char *GDM_SIGNATURE = "GDManager (ver11) by GM Oliveira";
+    
     /////////////////////////
 
     static void pout() { std::cout << std::endl; }
@@ -55,7 +55,7 @@ namespace GDM
 
     struct Shape
     {
-        uint32_t height, width;
+        uint64_t height, width;
     };
 
     enum class Type : uint32_t

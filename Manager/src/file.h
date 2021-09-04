@@ -26,7 +26,7 @@ namespace GDM
 		// helper functions to load data from file
 		std::ifstream gdmFile;
 		void loadDescription(Object &obj, uint64_t address);
-		void loadGroup(Group *obj, uint32_t numChildren, uint64_t dataAddress, uint64_t descAddress);
+		void loadGroup(Group *obj, uint64_t numChildren, uint64_t dataAddress, uint64_t descAddress);
 
 		void readFile(void);
 
@@ -37,7 +37,7 @@ namespace GDM
 		{
 			char label[MAX_LABEL_SIZE] = {0x00};	  // 4 x 8 bytes
 			uint64_t dataAddress, descriptionAddress; // 2 x 8 bytes
-			Shape shape;							  // 2 x 4 bytes
+			Shape shape;							  // 2 x 8 bytes
 			Type type;								  // 4 bytes	   |
 			uint32_t pad = 0xcccccccc;				  // 4 bytes     | 8 bytes after padding
 		};

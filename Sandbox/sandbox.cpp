@@ -9,7 +9,7 @@ using namespace GDM;
 
 int main(void)
 {
-	fs::path filename = "test.gdm";
+	fs::path filename = "../../test.gdm";
 	{
 		File arq(filename);
 

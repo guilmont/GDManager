@@ -213,7 +213,7 @@ namespace GDM
     template <typename TP>
     void Data::reset(const TP *ptr, Shape sp)
     {
-        uint64_t newSize = uint64_t(sp.width) * uint64_t(sp.height) * sizeof(TP);
+        uint64_t newSize = sp.width * sp.height * sizeof(TP);
         if (newSize != numBytes)
         {
             delete[] buffer;
