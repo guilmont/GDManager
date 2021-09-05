@@ -145,6 +145,7 @@ namespace GDM
         Data &add(const std::string &label, TP value);
 
         // remove elements
+        GDM_API void clear(void);
         GDM_API void remove(const std::string &label);
 
         // iterations

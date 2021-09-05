@@ -13,8 +13,8 @@ set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR} CACHE PATH "Location to install thi
 option(GDM_PYTHON_BINDING "Build python buildings got GDManager" ON)
 option(GDM_EDITOR "Build graphical interface to interact with GDM files" ON)
 option(GDM_CMD_VIEWER "Build command line tool to GDM file structure" ON)
-option(GDM_TEST "Builds file template for testing" ON)
-option(GDM_PRECOMPILE_HEADERS "Precompiles GDM headers" ON)
+option(GDM_TEST "Builds file template for testing" OFF)
+option(GDM_PRECOMPILE_HEADERS "Precompiles GDM headers" OFF)
 
 #######################################
 project(GDManager)

@@ -200,10 +200,8 @@ void GDEditor::ImGuiMenuLayer(void)
 			mailbox.setActive();
 
 		if (ImGui::MenuItem("Release memory"))
-		{
 			for (auto &[name, arq] : vFile)
 				releaseMemory(&arq);
-		}
 
 		ImGui::EndMenu();
 	} // file-menu
@@ -223,6 +221,7 @@ void GDEditor::recursiveTreeLoop(GDM::Group *group, ImGuiTreeNodeFlags nodeFlags
 
 		if (obj->getType() == GDM::Type::GROUP)
 		{
+			ImGui::SetNextTreeNodeOpen(false, ImGuiCond_Once); // it will run the first time
 
 			bool openTree = ImGui::TreeNodeEx(label.c_str(), nodeFlags);
 
@@ -248,7 +247,7 @@ void GDEditor::recursiveTreeLoop(GDM::Group *group, ImGuiTreeNodeFlags nodeFlags
 			{
 				recursiveTreeLoop(reinterpret_cast<GDM::Group *>(obj), nodeFlags);
 				ImGui::TreePop();
-			} // if-treenode
+			} 
 		}
 
 		else
@@ -959,7 +958,6 @@ void GDEditor::releaseMemory(GDM::Group* group)
 
 void GDEditor::openFile(const fs::path &inPath)
 {
-
 	if (vFile.find(inPath) != vFile.end())
 		mailbox.createWarn("File already openned!!");
 	else

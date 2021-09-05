@@ -212,14 +212,34 @@ namespace GDM
 
     Group &Group::addGroup(const std::string &label)
     {
-        assert(label.size() < MAX_LABEL_SIZE);
-        assert(m_children.find(label) == m_children.end());
+        uint64_t posEnd = label.find_first_of('/');
 
-        Group *ptr = new Group(label);
+        if (posEnd != std::string::npos)
+        {
+            const std::string& sub = label.substr(0, posEnd);
+            assert(sub.size() < MAX_LABEL_SIZE);
+
+            auto it = m_children.find(sub);
+
+            if (it == m_children.end())
+            {
+                Group* ptr = new Group(label);
+                ptr->parent = this;
+                m_children.emplace(label, std::move(ptr));
+                return ptr->addGroup(label.substr(posEnd + 1));
+            }
+            else
+            {
+                assert(it->second->getType() == Type::GROUP);
+                return reinterpret_cast<Group*>(it->second)->addGroup(label.substr(posEnd+1));
+            }
+        }
+        Group* ptr = new Group(label);
         ptr->parent = this;
-
         m_children.emplace(label, std::move(ptr));
+
         return *ptr;
+
     }
 
     void Group::addGroup(Group *group)
@@ -284,6 +304,8 @@ namespace GDM
 
     const Data &Group::getData(const std::string &label) const { return reinterpret_cast<const Data &>(this->operator[](label)); }
     Data &Group::getData(const std::string &label) { return reinterpret_cast<Data &>(this->operator[](label)); }
+
+    GDM_API void Group::clear(void) { m_children.clear(); }
 
     void Group::remove(const std::string &label)
     {
