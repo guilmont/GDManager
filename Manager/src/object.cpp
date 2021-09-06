@@ -36,45 +36,72 @@ namespace GDM
 
     Data::~Data(void)
     {
-        if (buffer)
+        if (isLoaded())
             delete[] buffer;
     }
 
     Data::Data(const Data &var)
     {
         this->label = var.label;
+        this->parent = var.parent;
+
         this->type = var.type;
         this->numBytes = var.numBytes;
         this->shape = var.shape;
 
-        this->buffer = new uint8_t[this->numBytes];
-        std::copy(var.buffer, var.buffer + var.numBytes, this->buffer);
+        this->offset = var.offset;
+        this->gdmFile = var.gdmFile;
 
-        // pout("DATA :: COPY CONSTRUCTOR >>", label);
+        if (var.isLoaded())
+        {
+            this->buffer = new uint8_t[this->numBytes];
+            std::copy(var.buffer, var.buffer + var.numBytes, this->buffer);
+        }
+
+        this->m_description = var.m_description; // This is a simple map, we don't need anything fancy
+
     }
 
     Data::Data(Data &&var) noexcept
     {
         this->label = std::move(var.label);
+        this->parent = var.parent;
+
         this->type = var.type;
         this->numBytes = var.numBytes;
         this->shape = var.shape;
-        this->buffer = std::move(var.buffer);
+
+        this->offset = var.offset;
+        this->gdmFile = var.gdmFile;
+
+        this->m_description = std::move(var.m_description); // This is a simple map, so we don't need anything fancy
+
+        // if var.buffer is nullptr, there is no point in moving anything, otherwise the offset takes care of it
+        if (var.isLoaded()) 
+            this->buffer = std::move(var.buffer);
 
         var.shape = {0, 0};
         var.numBytes = 0;
         var.buffer = nullptr;
-
-        // pout("DATA :: MOVE CONSTRUCTOR >>", label);
+        
+        var.parent = nullptr;
+        var.gdmFile = nullptr;
     }
 
     Data &Data::operator=(const Data &var)
     {
-        // pout("DATA::ASSIGN OPERATOR >>", label);
         if (&var != this)
-        {
+        {   
+            // we want to keep original label and parent
+            std::string name = this->label; 
+            Group *par = this->parent;
+
             this->~Data();
             new (this) Data(var);
+            
+            // Resetting original label and parent
+            this->label = name;
+            this->parent = par;
         }
 
         return *this;
@@ -82,12 +109,18 @@ namespace GDM
 
     Data &Data::operator=(Data &&var) noexcept
     {
-        // pout("DATA :: MOVE OPERATOR >>", label);
-
         if (&var != this)
         {
+            // We want to keep original label and parent
+            std::string name = this->label; 
+            Group *par = this->parent;
+
             this->~Data();
             new (this) Data(std::move(var));
+
+            // resetting to original label and parent
+            this->label = name;
+            this->parent = par;
         }
 
         return *this;
@@ -149,41 +182,81 @@ namespace GDM
     Group::~Group(void)
     {
         for (auto [label, ptr] : m_children)
-        {
-            // pout("GROUP :: DELETE >> ", label);
             delete ptr;
-        }
 
         m_children.clear();
     }
 
-    Group::Group(const Group &var)
+
+    Group::Group(const Group &var) 
     {
         this->label = var.label;
-        this->type = var.type;
-        this->m_children = var.m_children;
+        this->parent = var.parent;
+        this->type = Type::GROUP;
 
-        // pout("GROUP :: COPY CONSTRUCTOR >>", label);
+        this->m_description = var.m_description;
+
+        for (auto [label, obj] : var.m_children)
+        {
+            if (obj->getType() == Type::GROUP)
+            {
+                const Group &group = reinterpret_cast<Group &>(*obj);
+                Group *another = new Group(group);
+                another->parent = this;
+                m_children.emplace(group.getLabel(), std::move(another));
+            }
+            else
+            {
+                const GDM::Data &data = reinterpret_cast<Data &>(*obj);
+                this->copyData(data);
+            }
+        }
     }
 
-    Group::Group(Group &&var) noexcept
-    {
-        this->label = std::move(var.label);
-        this->type = var.type;
-        this->m_children = std::move(var.m_children);
+     Group::Group(Group &&var) noexcept
+     {
+         this->label = var.label;
+         this->parent = var.parent;
+         this->type = Type::GROUP;
 
-        var.m_children.clear();
+         this->m_description = std::move(var.m_description);
 
-        // pout("GROUP :: MOVE CONSTRUCTOR >>", label);
-    }
+         for (auto [label, obj] : var.m_children)
+         {
+             if (obj->getType() == Type::GROUP)
+             {
+                 Group& group = reinterpret_cast<Group&>(*obj);
+                 Group* another = new Group(std::move(group));
+                 another->parent = this;
+                 m_children.emplace(group.getLabel(), std::move(another));
+             }
+             else
+             {
+                 GDM::Data& data = reinterpret_cast<Data&>(*obj);
+
+                 Data* ptr = new Data(std::move(data));
+                 ptr->parent = this;
+                 m_children.emplace(label, std::move(ptr));
+             }
+
+            var.m_children.at(label) = nullptr;
+         }
+
+         var.m_children.clear();
+     }
 
     Group &Group::operator=(const Group &var)
     {
-        // pout("GROUP::ASSIGN OPERATOR >>", label);
         if (&var != this)
         {
+            std::string name = this->label;
+            Group *par = this->parent;
+
             this->~Group();
             new (this) Group(var);
+
+            this->label = name;
+            this->parent = par;
         }
 
         return *this;
@@ -191,12 +264,16 @@ namespace GDM
 
     Group &Group::operator=(Group &&var) noexcept
     {
-        // pout("GROUP :: MOVE OPERATOR >>", label);
-
         if (&var != this)
         {
+            std::string name = this->label;
+            Group* par = this->parent;
+
             this->~Group();
             new (this) Group(std::move(var));
+
+            this->label = name;
+            this->parent = par;
         }
 
         return *this;
@@ -212,100 +289,81 @@ namespace GDM
 
     Group &Group::addGroup(const std::string &label)
     {
-        uint64_t posEnd = label.find_first_of('/');
+        uint64_t pos = label.find_last_of('/');
 
-        if (posEnd != std::string::npos)
-        {
-            const std::string& sub = label.substr(0, posEnd);
-            assert(sub.size() < MAX_LABEL_SIZE);
+        Group *grp = this;
+        if (pos != std::string::npos)
+            grp = reinterpret_cast<Group *>(getObject(label.substr(0, pos)));
 
-            auto it = m_children.find(sub);
 
-            if (it == m_children.end())
-            {
-                Group* ptr = new Group(label);
-                ptr->parent = this;
-                m_children.emplace(label, std::move(ptr));
-                return ptr->addGroup(label.substr(posEnd + 1));
-            }
-            else
-            {
-                assert(it->second->getType() == Type::GROUP);
-                return reinterpret_cast<Group*>(it->second)->addGroup(label.substr(posEnd+1));
-            }
-        }
-        Group* ptr = new Group(label);
+        const std::string name = label.substr(pos+1);
+        assert(name.size() < MAX_LABEL_SIZE);
+
+        Group* ptr = new Group(name);
+        ptr->parent = grp;
+        grp->m_children.emplace(name, std::move(ptr));
+
+        return *ptr;
+    }
+
+    void Group::copyData(const Data& data)
+    {
+        Data *ptr = new Data(data);
+        ptr->parent = this;
+        m_children.emplace(ptr->getLabel(), std::move(ptr));
+    }
+
+    void Group::importData(Data &data)
+    {
+        Group *par = data.parent;
+        std::string label = data.getLabel();
+
+        Data *ptr = new Data(std::move(data));
         ptr->parent = this;
         m_children.emplace(label, std::move(ptr));
 
-        return *ptr;
+        par->m_children.at(label) = nullptr;
+        par->m_children.erase(label);
 
     }
 
-    void Group::addGroup(Group *group)
+    Group &Group::getGroup(const std::string &label) 
     {
-        const std::string &label = group->getLabel();
-        assert(m_children.find(label) == m_children.end());
+        Object *obj = getObject(label);
 
-        group->parent = this;
-
-        m_children.emplace(label, std::move(group));
+        assert(obj->getType() == Type::GROUP);
+        return reinterpret_cast<Group &>(*obj); 
     }
 
-    void Group::copyData(Data *data)
+    const Group &Group::getGroup(const std::string &label) const 
     {
-        const std::string &label = data->getLabel();
-        assert(m_children.find(label) == m_children.end());
+        const Object *obj = getObject(label);
 
-        bool loaded = data->isLoaded();
-
-        Shape sp = data->getShape();
-
-        Data *loc = new Data(label, data->getType());
-        loc->parent = this;
-
-        // Copying data
-        const uint8_t *ptr = data->getRawBuffer();
-        loc->buffer = new uint8_t[data->numBytes];
-        std::copy(ptr, ptr + data->numBytes, loc->buffer);
-
-        loc->shape = data->shape;
-        loc->numBytes = data->numBytes;
-        loc->offset = data->offset;
-        loc->gdmFile = data->gdmFile;
-
-        // Copying descriptions
-        for (auto &[label, desc] : data->m_description)
-            loc->addDescription(label, desc);
-
-        if (!loaded)
-            data->release();
-
-        m_children.emplace(label, std::move(loc));
+        assert(obj->getType() == Type::GROUP);
+        return reinterpret_cast<const Group &>(*obj); 
     }
 
-    void Group::moveData(Data *data)
+    Data &Group::getData(const std::string &label) 
     {
-        const std::string &label = data->getLabel();
-        assert(m_children.find(label) == m_children.end());
+        Object *obj = getObject(label);
 
-        Group *other = data->parent;
-        data->parent = this;
-
-        m_children.emplace(label, std::move(data));
-
-        other->m_children[label] = nullptr;
-        other->m_children.erase(label);
-        // Now we need to remove from original group
+        assert(obj->getType() != Type::GROUP);
+        return reinterpret_cast<Data &>(*obj); 
     }
 
-    const Group &Group::getGroup(const std::string &label) const { return reinterpret_cast<const Group &>(this->operator[](label)); }
-    Group &Group::getGroup(const std::string &label) { return reinterpret_cast<Group &>(this->operator[](label)); }
+    const Data &Group::getData(const std::string &label) const 
+    {
+        const Object *obj = getObject(label);
 
-    const Data &Group::getData(const std::string &label) const { return reinterpret_cast<const Data &>(this->operator[](label)); }
-    Data &Group::getData(const std::string &label) { return reinterpret_cast<Data &>(this->operator[](label)); }
+        assert(obj->getType() != Type::GROUP);
+        return reinterpret_cast<const Data &>(*obj);
+    }
 
-    GDM_API void Group::clear(void) { m_children.clear(); }
+    GDM_API void Group::clear(void) 
+    {
+        m_children.clear(); 
+        m_description.clear();
+    }
 
     void Group::remove(const std::string &label)
     {
@@ -315,69 +373,46 @@ namespace GDM
         m_children.erase(it);
     }
 
-    Object &Group::operator[](const std::string &label)
+    Object *Group::getObject(const std::string &label)
     {
-        uint64_t
-            posZero = 0,
-            posEnd = label.find_first_of('/');
+        uint64_t pos = label.find_first_of('/');
 
-        const Group *obj = this;
-        while (posEnd != std::string::npos)
+        if (pos != std::string::npos)
         {
-            const std::string &sub = label.substr(posZero, posEnd - posZero);
-            assert(sub.size() < MAX_LABEL_SIZE);
+            const std::string &bot = label.substr(0, pos);
+            const std::string &top = label.substr(pos+1);
 
-            auto it = obj->m_children.find(sub);
+            auto out = m_children.find(bot);
+            assert(out != m_children.end()); // Does it exist?
 
-            if (it == obj->m_children.end())          // Does it exist?
-                throw "Object doesn't exist!! >> " + label;
-
-            if (it->second->getType() != Type::GROUP) // Make sure it is a group
-                throw "Object is not a group!! >> " + label;
-            
-            
-            obj = reinterpret_cast<const Group *>(it->second);
-
-            posZero = posEnd + 1;
-            posEnd = label.find('/', posZero);
+            Group *grp = reinterpret_cast<Group*>(out->second);
+            return grp->getObject(top);
         }
 
-        auto out = obj->m_children.find(label.substr(posZero));
-        assert(out != obj->m_children.end()); // Does it exist?
-
-        return *(out->second);
+        auto out = m_children.find(label);
+        assert(out != m_children.end()); // Does it exist?
+        return out->second;
     }
 
-    const Object &Group::operator[](const std::string &label) const
+    const Object *Group::getObject(const std::string &label) const
     {
-        uint64_t
-            posZero = 0,
-            posEnd = label.find_first_of('/');
+        uint64_t pos = label.find_first_of('/');
 
-        const Group *obj = this;
-        while (posEnd != std::string::npos)
+        if (pos != std::string::npos)
         {
-            const std::string &sub = label.substr(posZero, posEnd - posZero);
-            assert(sub.size() < MAX_LABEL_SIZE);
+            const std::string &bot = label.substr(0, pos);
+            const std::string &top = label.substr(pos+1);
 
-            auto it = obj->m_children.find(sub);
-            
-            if (it == obj->m_children.end())          // Does it exist?
-                throw "Object doesn't exist!! >> " + label;
+            auto out = m_children.find(bot);
+            assert(out != m_children.end()); // Does it exist?
 
-            if (it->second->getType() != Type::GROUP) // Make sure it is a group
-                throw "Object is not a group!! >> " + label;
-
-            obj = reinterpret_cast<const Group *>(it->second);
-
-            posZero = posEnd + 1;
-            posEnd = label.find('/', posZero);
+            const Group *grp = reinterpret_cast<const Group*>(out->second);
+            return grp->getObject(top);
         }
 
-        auto it = obj->m_children.find(label.substr(posZero));
-        assert(it != m_children.end()); // Does it exist?
-
-        return *(it->second);
+        auto out = m_children.find(label);
+        assert(out != m_children.end()); // Does it exist?
+        return out->second;
     }
 
 }

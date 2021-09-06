@@ -1,13 +1,14 @@
+import numpy as np
 from math import pi
 import GDManager as GDM
 
-import numpy as np
 
 
 def createFile():
     print("###########################################################\ncreateFunction()\n")
 
     arq = GDM.File("pytest.gdm")
+    arq.clear()
 
     arq.addData("this is pi", pi)
 
@@ -33,38 +34,43 @@ def createFile():
     t12.addData("A", A)
 
     arq.save()
+    
 
 
 def readFile():
     print("\n###########################################################\nreadFunction()")
 
-    arq = GDM.File("pytest.gdm")  # READ is the default state
+    arq = GDM.File("pytest.gdm")
 
-    ola = arq["hoxa/hic/resolution"]
+    ola = arq.getData("hoxa/hic/resolution")
     print(ola.getType())
     print(ola.getLabel())
 
     group = arq.getGroup("hoxa/cellLines/T1-T2")
     loc = group.getData("distance")
-    print(loc.get(), loc.getDescription("Units"))
+    print(loc.get()[0], loc.getDescription("Units"))
 
-    loc = arq["hoxa/cellLines/T1-T2/locations"].get()
+    loc = arq.getData("hoxa/cellLines/T1-T2/locations").get()[0]
     print(loc)
 
-    print(arq["hoxa/cellLines/T1-T2/locations"].getShape())
+    print(arq.getData("hoxa/cellLines/T1-T2/locations").getShape())
 
     pi = arq.getData("this is pi")
     print(pi.get()[0, 0])
 
     D = arq.getData("hoxa/cellLines/T1-T2/D")
-    arq.moveData(D)
+    arq.importData(D)
 
     A = arq.getData("hoxa/cellLines/T1-T2/A")
     arq.copyData(A)
 
     arq.save()
+    
+    
 
 
 if __name__ == "__main__":
+    # Run individually or add some time in between both functions
+    # It's weird, but python returns from save before the file is done
     createFile()
     readFile()

@@ -182,14 +182,16 @@ class Group(Object):
 
         lib.newGroup.argtypes, lib.newGroup.restype = [ctypes.c_char_p], ctypes.c_void_p
         lib.groupContains.argtypes, lib.groupContains.restype = [ctypes.c_void_p, ctypes.c_char_p], ctypes.c_bool
+
+        lib.groupClear.argtypes, lib.groupClear.restype = [ctypes.c_void_p], None
         lib.groupRemove.argtypes, lib.groupRemove.restype = [ctypes.c_void_p, ctypes.c_char_p], None
 
-        lib.getObject.argtypes, lib.getObject.restype = [ctypes.c_void_p, ctypes.c_char_p], ctypes.c_void_p
-
         lib.addGroup.argtypes,    lib.addGroup.restype = [ctypes.c_void_p, ctypes.c_char_p], ctypes.c_void_p
-        lib.addGroupObj.argtypes, lib.addGroupObj.restype = [ctypes.c_void_p, ctypes.c_void_p], None
         lib.copyDataObj.argtypes,  lib.copyDataObj.restype = [ctypes.c_void_p, ctypes.c_void_p], None
-        lib.moveDataObj.argtypes,  lib.moveDataObj.restype = [ctypes.c_void_p, ctypes.c_void_p], None
+        lib.importDataObj.argtypes,  lib.importDataObj.restype = [ctypes.c_void_p, ctypes.c_void_p], None
+
+        lib.getGroup.argtypes, lib.getGroup.restype = [ctypes.c_void_p, ctypes.c_char_p], ctypes.c_void_p
+        lib.getData.argtypes, lib.getData.restype = [ctypes.c_void_p, ctypes.c_char_p], ctypes.c_void_p
 
         lib.addInt32.argtypes,  lib.addInt32.restype = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint64, ctypes.c_uint64], ctypes.c_void_p
         lib.addInt64.argtypes,  lib.addInt64.restype = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint64, ctypes.c_uint64], ctypes.c_void_p
@@ -211,38 +213,33 @@ class Group(Object):
     def remove(self, label):
         lib.groupRemove(self.obj, label.encode('ascii'))
 
+    def clear(self):
+        lib.groupClear(self.obj)
+
     #########################
     # Getting objects
 
-    def __getitem__(self, key):  # To facilitate navigation
-
-        loc = self
-        for label in key.split('/'):
-            ptr = lib.getObject(loc.obj, label.encode('ascii'))
-            tp = lib.getObjectType(ptr)
-
-            if tp == Type.GROUP:
-                loc = Group(label)
-                loc.obj = ptr
-            else:
-                loc = Data(label, tp)
-                loc.obj = ptr
-
-        return loc
-
     def getData(self, label):
-        loc = self.__getitem__(label)
+        ptr = lib.getData(self.obj, label.encode('ascii'))
+        tp = lib.getObjectType(ptr)
 
-        if loc.getType() == Type.GROUP:
+        if lib.getObjectType(ptr) == Type.GROUP:
             raise TypeError
+
+        loc = Data(label, tp)
+        loc.obj = ptr
 
         return loc
 
     def getGroup(self, label):
-        loc = self.__getitem__(label)
+        ptr = lib.getGroup(self.obj, label.encode('ascii'))
+        tp = lib.getObjectType(ptr)
 
-        if loc.getType() != Type.GROUP:
+        if lib.getObjectType(ptr) != Type.GROUP:
             raise TypeError
+
+        loc = Group(label)
+        loc.obj = ptr
 
         return loc
 
@@ -260,8 +257,8 @@ class Group(Object):
     def copyData(self, data):
         lib.copyDataObj(self.obj, data.obj)
 
-    def moveData(self, data):
-        lib.moveDataObj(self.obj, data.obj)
+    def importData(self, data):
+        lib.importDataObj(self.obj, data.obj)
 
     def addData(self, label, array):
         if (np.isscalar(array)):

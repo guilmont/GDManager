@@ -46,14 +46,16 @@ extern "C"
 
     GDM_API GDM::Group *newGroup(const char *name) { return new GDM::Group(name); }
     GDM_API bool groupContains(GDM::Group *group, const char *name) { return group->contains(name); }
+
+    GDM_API void groupClear(GDM::Group *group) { group->clear(); }
     GDM_API void groupRemove(GDM::Group *group, const char *label) { group->remove(label); }
 
-    GDM_API GDM::Object *getObject(GDM::Group *group, const char *label) { return &group->operator[](label); }
-
     GDM_API GDM::Group *addGroup(GDM::Group *group, const char *label) { return &group->addGroup(label); }
-    GDM_API void copyDataObj(GDM::Group* group, GDM::Data* data) { group->copyData(data); }
-    GDM_API void moveDataObj(GDM::Group *group, GDM::Data *data) { group->moveData(data); }
-    GDM_API void addGroupObj(GDM::Group *group, GDM::Group *obj) { group->addGroup(obj); }
+    GDM_API void copyDataObj(GDM::Group* group, const GDM::Data* data) { group->copyData(*data); }
+    GDM_API void importDataObj(GDM::Group *group, GDM::Data *data) { group->importData(*data); }
+
+    GDM_API GDM::Group *getGroup(GDM::Group *group, const char *label) { return &group->getGroup(label); }
+    GDM_API GDM::Data *getData(GDM::Group *group, const char *label) { return &group->getData(label); }
 
     GDM_API GDM::Data *addInt32(GDM::Group *obj, const char *label, const int32_t *ptr, uint64_t height, uint64_t width) { return &(obj->add<int32_t>(label, ptr, {height, width})); }
     GDM_API GDM::Data *addInt64(GDM::Group *obj, const char *label, const int64_t *ptr, uint64_t height, uint64_t width) { return &(obj->add<int64_t>(label, ptr, {height, width})); }
@@ -63,9 +65,6 @@ extern "C"
     GDM_API GDM::Data *addUInt64(GDM::Group *obj, const char *label, const uint64_t *ptr, uint64_t height, uint64_t width) { return &(obj->add<uint64_t>(label, ptr, {height, width})); }
     GDM_API GDM::Data *addFloat(GDM::Group *obj, const char *label, const float *ptr, uint64_t height, uint64_t width) { return &(obj->add<float>(label, ptr, {height, width})); }
     GDM_API GDM::Data *addDouble(GDM::Group *obj, const char *label, const double *ptr, uint64_t height, uint64_t width) { return &(obj->add<double>(label, ptr, {height, width})); }
-
-    // GDM_API uint32_t getNumChildren(GDM::Group *group) { return uint32_t(m_children.size()); }
-    // GDM_API <std::string, Object *> &children() { return m_children; }
 
     ///////////////////////////////////////////////////////
     // File

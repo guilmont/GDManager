@@ -6,6 +6,8 @@ GDM is a C++ library that allows to save data in an structured and easy to acess
 
 GDM files are read using a "lazy" approach, so the user can optimize RAM usage when working with a great amount of data.
 
+WARNING: API is under development, hence susceptible to changes.
+
 ## GDEditor
 <img src="./screenshot/GDEditor.png" alt="gdeditor_demo" width="98%">
 

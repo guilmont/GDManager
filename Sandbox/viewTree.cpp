@@ -9,7 +9,7 @@ static void printGroup(std::string step, GDM::Group &obj)
 		if (type == GDM::Type::GROUP)
 		{
 			GDM::Group *group = reinterpret_cast<GDM::Group *>(ptr);
-			printf("\n%s%s :: GROUP {%d} >> ", step.c_str(), label.c_str(), group->getNumChildren());
+			printf("\n%s%s :: GROUP {%lld} >> ", step.c_str(), label.c_str(), group->getNumChildren());
 		}
 
 		else

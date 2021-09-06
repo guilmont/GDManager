@@ -31,13 +31,6 @@ namespace GDM
         // We might want to now the parent object as well
         Group *parent = nullptr;
 
-        // And maybe we would like to cast into another type
-        template <typename TP>
-        TP &cast(void) { return *reinterpret_cast<TP *>(this); }
-
-        template <typename TP>
-        const TP &cast(void) const { return *reinterpret_cast<const TP *>(this); }
-
     protected:
         std::string label = "";
         Type type = Type::NONE;
@@ -118,9 +111,6 @@ namespace GDM
         GDM_API Group &operator=(const Group &mat);
         GDM_API Group &operator=(Group &&mat) noexcept;
 
-        GDM_API const Object &operator[](const std::string &label) const; // return child object
-        GDM_API Object &operator[](const std::string &label);             // returns child object
-
         // utilities
         GDM_API bool contains(const std::string &name) const;
 
@@ -130,13 +120,12 @@ namespace GDM
         GDM_API Data &getData(const std::string &label);
         GDM_API const Data &getData(const std::string &label) const;
 
-        // Add new groups to current group
+        // Add new group to current group
         GDM_API Group &addGroup(const std::string &label);
-        GDM_API void addGroup(Group *group);
 
-        // Adding data to group
-        GDM_API void copyData(Data *data); // copies data from a group into another, also works between files
-        GDM_API void moveData(Data *data); // move data from one place to another
+        // Moving data between groups
+        GDM_API void copyData(const Data &data); // copies data from a group into another
+        GDM_API void importData(Data &data); // move data from one place to another
 
         template <typename TP>
         Data &add(const std::string &label, const TP *value, Shape shape);
@@ -149,11 +138,14 @@ namespace GDM
         GDM_API void remove(const std::string &label);
 
         // iterations
-        GDM_API uint32_t getNumChildren(void) const { return uint32_t(m_children.size()); }
+        GDM_API uint64_t getNumChildren(void) const { return m_children.size(); }
         GDM_API std::unordered_map<std::string, Object *> &children() { return m_children; }
 
     private:
         std::unordered_map<std::string, Object *> m_children;
+
+        Object *getObject(const std::string &label);
+        const Object *getObject(const std::string &label) const;
     };
 
     ///////////////////////////////////////////////////////////////////////////
