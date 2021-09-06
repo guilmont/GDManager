@@ -202,10 +202,58 @@ class Group(Object):
         lib.addFloat.argtypes,  lib.addFloat.restype = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint64, ctypes.c_uint64], ctypes.c_void_p
         lib.addDouble.argtypes, lib.addDouble.restype = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_uint64, ctypes.c_uint64], ctypes.c_void_p
 
+        lib.groupNumChildren.argtypes, lib.groupNumChildren.restype = [ctypes.c_void_p], ctypes.c_uint64
+        lib.groupChildren.argtypes, lib.groupChildren.restype = [ctypes.c_void_p], ctypes.c_void_p
+        lib.getObject.argtypes, lib.getObject.restype = [ctypes.c_void_p, ctypes.c_char_p], ctypes.c_void_p
+
         self.obj = lib.newGroup(name.encode('ascii'))
+        self.iter, self.children = 0, list()
+
 
     #########################
     # Utilities
+
+    def __iter__(self):
+        # Get number of children
+        N = lib.groupNumChildren(self.obj)
+
+        ptr = ctypes.cast(lib.groupChildren(self.obj), ctypes.POINTER(ctypes.c_uint8))
+
+        ct = 0
+        for k in range(N):
+            size = int(ptr[ct])
+            ct+=1
+
+            vec = [ chr(a) for a in ptr[ct:ct+size]]
+            ct += size
+
+            self.children.append("".join(vec))
+
+        self.iter = 0
+        return self
+
+    def __next__(self):
+        if self.iter < len(self.children):
+            
+            label = self.children[self.iter]
+            self.iter += 1
+            
+            ptr = lib.getObject(self.obj, label.encode('ascii'))
+            tp = lib.getObjectType(ptr) 
+
+            if (tp == Type.GROUP):
+                grp = Group(label)
+                grp.obj = ptr
+                return label, grp
+
+            else:
+                dt = Data(label, tp)
+                dt.obj = ptr
+
+                return label, dt
+        else:
+            raise StopIteration
+
 
     def contains(self, label):
         return lib.groupContains(self.obj, label.encode('ascii'))

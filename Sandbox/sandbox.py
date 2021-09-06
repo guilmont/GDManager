@@ -42,21 +42,24 @@ def readFile():
 
     arq = GDM.File("pytest.gdm")
 
+    for label, obj in arq:
+        print(label, obj.getType())
+
     ola = arq.getData("hoxa/hic/resolution")
     print(ola.getType())
     print(ola.getLabel())
 
     group = arq.getGroup("hoxa/cellLines/T1-T2")
     loc = group.getData("distance")
-    print(loc.get()[0], loc.getDescription("Units"))
+    print(loc[0], loc.getDescription("Units"))
 
-    loc = arq.getData("hoxa/cellLines/T1-T2/locations").get()[0]
+    loc = arq.getData("hoxa/cellLines/T1-T2/locations")[0]
     print(loc)
 
     print(arq.getData("hoxa/cellLines/T1-T2/locations").getShape())
 
     pi = arq.getData("this is pi")
-    print(pi.get()[0, 0])
+    print(pi[0, 0])
 
     D = arq.getData("hoxa/cellLines/T1-T2/D")
     arq.importData(D)
@@ -73,4 +76,10 @@ if __name__ == "__main__":
     # Run individually or add some time in between both functions
     # It's weird, but python returns from save before the file is done
     createFile()
-    readFile()
+    # readFile()
+
+
+    
+
+
+  

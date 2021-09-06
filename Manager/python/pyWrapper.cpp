@@ -66,6 +66,35 @@ extern "C"
     GDM_API GDM::Data *addFloat(GDM::Group *obj, const char *label, const float *ptr, uint64_t height, uint64_t width) { return &(obj->add<float>(label, ptr, {height, width})); }
     GDM_API GDM::Data *addDouble(GDM::Group *obj, const char *label, const double *ptr, uint64_t height, uint64_t width) { return &(obj->add<double>(label, ptr, {height, width})); }
 
+
+    GDM_API uint64_t groupNumChildren(GDM::Group *obj) { return obj->getNumChildren(); }
+    GDM_API GDM::Object *getObject(GDM::Group *obj, const char* label) { return obj->children().at(label); }    
+
+    GDM_API uint8_t* groupChildren(GDM::Group *obj)
+    {
+        uint64_t ct = 0;
+        for (auto &[label, obj] : obj->children())
+            ct += label.size()+1;
+
+        uint8_t *ptr = new uint8_t[ct];
+
+        ct = 0;        
+        for (auto &[label, obj] : obj->children())
+        {
+            uint8_t size = static_cast<uint8_t>(label.size()); // It must be less than 32 by definition
+
+            memcpy(ptr + ct, &size, 1);
+            ct++;
+
+            memcpy(ptr + ct, label.c_str(), label.size());
+            ct += label.size();
+        }
+
+        return ptr;
+    } 
+
+
+    
     ///////////////////////////////////////////////////////
     // File
     GDM_API GDM::File *newFile(const char *filepath) { return new GDM::File(fs::path(filepath)); }
