@@ -95,40 +95,40 @@ class Data(Object):
     def release(self):
         lib.releaseData(self.obj)
 
-    def get(self):
+    def __getitem__(self, id):
         typ = self.getType()
 
         if typ == Type.INT32:
             ptr = ctypes.cast(lib.getInt32(self.obj), ctypes.POINTER(ctypes.c_int32))
-            return np.ctypeslib.as_array(ptr, shape=self.getShape()).copy()
+            return np.ctypeslib.as_array(ptr, shape=self.getShape()).copy()[id]
 
         elif typ == Type.INT64:
             ptr = ctypes.cast(lib.getInt64(self.obj), ctypes.POINTER(ctypes.c_int64))
-            return np.ctypeslib.as_array(ptr, shape=self.getShape()).copy()
+            return np.ctypeslib.as_array(ptr, shape=self.getShape()).copy()[id]
 
         elif typ == Type.UINT8:
             ptr = ctypes.cast(lib.getUInt8(self.obj), ctypes.POINTER(ctypes.c_uint8))
-            return np.ctypeslib.as_array(ptr, shape=self.getShape()).copy()
+            return np.ctypeslib.as_array(ptr, shape=self.getShape()).copy()[id]
 
         elif typ == Type.UINT16:
             ptr = ctypes.cast(lib.getUInt16(self.obj), ctypes.POINTER(ctypes.c_uint16))
-            return np.ctypeslib.as_array(ptr, shape=self.getShape()).copy()
+            return np.ctypeslib.as_array(ptr, shape=self.getShape()).copy()[id]
 
         elif typ == Type.UINT32:
             ptr = ctypes.cast(lib.getUInt32(self.obj), ctypes.POINTER(ctypes.c_uint32))
-            return np.ctypeslib.as_array(ptr, shape=self.getShape()).copy()
+            return np.ctypeslib.as_array(ptr, shape=self.getShape()).copy()[id]
 
         elif typ == Type.UINT64:
             ptr = ctypes.cast(lib.getUInt64(self.obj), ctypes.POINTER(ctypes.c_uint64))
-            return np.ctypeslib.as_array(ptr, shape=self.getShape()).copy()
+            return np.ctypeslib.as_array(ptr, shape=self.getShape()).copy()[id]
 
         elif typ == Type.FLOAT:
             ptr = ctypes.cast(lib.getFloat(self.obj), ctypes.POINTER(ctypes.c_float))
-            return np.ctypeslib.as_array(ptr, shape=self.getShape()).copy()
+            return np.ctypeslib.as_array(ptr, shape=self.getShape()).copy()[id]
 
         elif typ == Type.DOUBLE:
             ptr = ctypes.cast(lib.getDouble(self.obj), ctypes.POINTER(ctypes.c_double))
-            return np.ctypeslib.as_array(ptr, shape=self.getShape()).copy()
+            return np.ctypeslib.as_array(ptr, shape=self.getShape()).copy()[id]
 
         else:
             raise TypeError
