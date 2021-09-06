@@ -51,6 +51,7 @@ namespace GDM
 			uint8_t *ptr = nullptr;
 
 			uint64_t inputFileOffset = 0; // In case the the data was never loaded into RAM
+			std::ifstream* gdmFile = nullptr;
 		};
 
 		struct HelperDescription // not to be used directly into file

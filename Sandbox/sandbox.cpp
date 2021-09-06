@@ -10,6 +10,11 @@ using namespace GDM;
 int main(void)
 {
 	fs::path filename = "../../test.gdm";
+	fs::path outname = "../../test2.gdm";
+
+	if (fs::exists(outname))
+		fs::remove(outname);
+
 	{
 		File arq(filename);
 		arq.clear();
@@ -20,8 +25,8 @@ int main(void)
 
 		hoxa.addDescription("test", "hello hoxa");
 
-		uint32_t loc[2] = {52014370, 52321145};
-		hoxa.add<uint32_t>("locations", loc, {1, 2}).addDescription("hello", "this is a description");
+		uint64_t loc[2] = {52014370, 52321145};
+		hoxa.add<uint64_t>("locations", loc, {1, 2}).addDescription("hello", "this is a description");
 		
 		Group &hic = arq.addGroup("hoxa/hic");
 		hic.addDescription("hi", "yet another");
@@ -35,11 +40,12 @@ int main(void)
 
 	 {
 	 	File arq(filename);
+		File gdm(outname);
 
-		arq.addGroup("newGroup") = std::move(arq.getGroup("hoxa"));
-		arq.remove("hoxa");
-
-	 	arq.save();
+		gdm.addGroup("hello") = arq;
+		
+	 	gdm.save();
+		arq.close();
 	 }
 
 	return EXIT_SUCCESS;

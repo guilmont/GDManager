@@ -123,8 +123,8 @@ namespace GDM
 				uint64_t size = data.numBytes + sizeof(uint64_t) + sizeof(Compression);
 				char *buf = new char[size];
 
-				gdmFile.seekg(data.inputFileOffset);
-				gdmFile.read(buf, size);
+				data.gdmFile->seekg(data.inputFileOffset);
+				data.gdmFile->read(buf, size);
 				output.write(buf, size);
 
 				delete[] buf;
@@ -224,7 +224,10 @@ namespace GDM
 					if (dt.buffer)
 						hdt.ptr = dt.buffer;
 					else
+					{
 						hdt.inputFileOffset = dt.offset;
+						hdt.gdmFile = dt.gdmFile;
+					}
 
 					vData.emplace_back(std::move(hdt));
 				}
