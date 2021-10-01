@@ -2,7 +2,6 @@
 
 extern "C"
 {
-
     // Object
     GDM_API const char *getObjectLabel(GDM::Object *obj) { return obj->getLabel().c_str(); }
     GDM_API uint32_t getObjectType(GDM::Object *obj) { return static_cast<uint32_t>(obj->getType()); }
@@ -11,8 +10,33 @@ extern "C"
 
     GDM_API void renameObject(GDM::Object *obj, const char *name) { obj->rename(name); }
 
+    GDM_API uint64_t getNumDescriptions(GDM::Object *obj) { return obj->descriptions().size(); }
+
     GDM_API void addDescription(GDM::Object *obj, const char *label, const char *description) { obj->addDescription(label, description); }
     GDM_API const char *getDescription(GDM::Object *obj, const char *label) { return obj->getDescription(label).c_str(); }
+
+    GDM_API uint8_t* descriptionChildren(GDM::Group *obj)
+    {
+        uint64_t ct = 0;
+        for (auto &[label, desc] : obj->descriptions())
+            ct += label.size()+1;
+
+        uint8_t *ptr = new uint8_t[ct];
+
+        ct = 0;        
+        for (auto &[label, desc] : obj->descriptions())
+        {
+            uint8_t size = static_cast<uint8_t>(label.size()); // It must be less than 32 by definition
+
+            memcpy(ptr + ct, &size, 1);
+            ct++;
+
+            memcpy(ptr + ct, label.c_str(), label.size());
+            ct += label.size();
+        }
+
+        return ptr;
+    } 
 
     ///////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
@@ -70,16 +94,16 @@ extern "C"
     GDM_API uint64_t groupNumChildren(GDM::Group *obj) { return obj->getNumChildren(); }
     GDM_API GDM::Object *getObject(GDM::Group *obj, const char* label) { return obj->children().at(label); }    
 
-    GDM_API uint8_t* groupChildren(GDM::Group *obj)
+    GDM_API uint8_t* groupChildren(GDM::Group *grp)
     {
         uint64_t ct = 0;
-        for (auto &[label, obj] : obj->children())
+        for (auto &[label, obj] : grp->children())
             ct += label.size()+1;
 
         uint8_t *ptr = new uint8_t[ct];
 
         ct = 0;        
-        for (auto &[label, obj] : obj->children())
+        for (auto &[label, obj] : grp->children())
         {
             uint8_t size = static_cast<uint8_t>(label.size()); // It must be less than 32 by definition
 
